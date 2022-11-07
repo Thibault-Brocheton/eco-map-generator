@@ -5,6 +5,9 @@
   <title>MAP Generator</title>
 
   <script src="fabric.min.js"></script>
+  <script src="three.js"></script>
+  <script src="OrbitControls.js"></script>
+  <script src="stats.min.js"></script>
 
   <style>
         body {
@@ -32,115 +35,340 @@
 MAP GENERATOR<br/>
 
 <input type="number" id="size" value="720" />
-<button onclick="reset()">init/reset</button><br />
+<button onclick="reset()">init/reset</button> - <button><label for="imageInput">Import Existing</label></button><input style="visibility:hidden;" type="file" id="imageInput" accept = "image/png"><br />
 
 <div id="content" style="display: none">
   <div id="mapbar">
-    <button onclick="showBiomes()">Show Biomes</button>
-    <button onclick="showWater()">Show Water</button>
-    <button onclick="showHeight()">Show Height</button><br />
+    <button id="toggle-water" onclick="toggleWater()">Show Water</button>
+    <button id="toggle-3d" onclick="toggle3d()">Show 3d</button><br />
   </div>
   <div id="drawing">
-    <div id="maps">
+    <div id="maps" style="position: relative;">
       <canvas id="map_biomes" width="720" height="720" style="display: none"></canvas>
-      <canvas id="map_water" width="720" height="720" style="display: none"></canvas>
-      <canvas id="map_height" width="720" height="720" style="display: none"></canvas>
+      <canvas id="map_water" width="720" height="720" style="display: none; position: absolute; top: 0; left: 0;"></canvas>
+      <div id="map_height" style="background-color:white; display: none; position: absolute; top: 0; left: 0;"></div>
     </div>
     <div id="toolbar">
       TOOLBAR<br/>
       <button onclick="toolPen()">PEN</button>
       <button onclick="toolFill()">FILL</button><br />
       <input type="number" id="brushWidth" onchange="changeBrushWidth()" value="10" /><br />
-      <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Empty<br />
-      <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> Deep Ocean<br />
-      <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Ocean<br />
-      <button class="colorPicker" style="background-color: #fafad2" onclick="switchColor('#fafad2')"></button> Coast<br />
-      <button class="colorPicker" style="background-color: #90ee90" onclick="switchColor('#90ee90')"></button> Grasslands<br />
-      <button class="colorPicker" style="background-color: #b8860b" onclick="switchColor('#b8860b')"></button> WarmForest<br />
-      <button class="colorPicker" style="background-color: #f4a460" onclick="switchColor('#f4a460')"></button> Desert<br />
-      <button class="colorPicker" style="background-color: #20b2aa" onclick="switchColor('#20b2aa')"></button> RainForest<br />
-      <button class="colorPicker" style="background-color: #006400" onclick="switchColor('#006400')"></button> Wetland<br />
-      <button class="colorPicker" style="background-color: #228b22" onclick="switchColor('#228b22')"></button> ColdForest<br />
-      <button class="colorPicker" style="background-color: #6b8e23" onclick="switchColor('#6b8e23')"></button> Taiga<br />
-      <button class="colorPicker" style="background-color: #bdb76b" onclick="switchColor('#bdb76b')"></button> Tundra<br />
-      <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Ice<br />
+      <div id="color-biomes" style="display: block">
+        <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Empty<br />
+        <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> Deep Ocean<br />
+        <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Ocean<br />
+        <button class="colorPicker" style="background-color: #fafad2" onclick="switchColor('#fafad2')"></button> Coast<br />
+        <button class="colorPicker" style="background-color: #90ee90" onclick="switchColor('#90ee90')"></button> Grasslands<br />
+        <button class="colorPicker" style="background-color: #b8860b" onclick="switchColor('#b8860b')"></button> WarmForest<br />
+        <button class="colorPicker" style="background-color: #f4a460" onclick="switchColor('#f4a460')"></button> Desert<br />
+        <button class="colorPicker" style="background-color: #20b2aa" onclick="switchColor('#20b2aa')"></button> RainForest<br />
+        <button class="colorPicker" style="background-color: #006400" onclick="switchColor('#006400')"></button> Wetland<br />
+        <button class="colorPicker" style="background-color: #228b22" onclick="switchColor('#228b22')"></button> ColdForest<br />
+        <button class="colorPicker" style="background-color: #6b8e23" onclick="switchColor('#6b8e23')"></button> Taiga<br />
+        <button class="colorPicker" style="background-color: #bdb76b" onclick="switchColor('#bdb76b')"></button> Tundra<br />
+        <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Ice<br />
+      </div>
+      <div id="color-water" style="display: none">
+        <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Empty<br />
+        <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> River<br />
+        <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Lake<br />
+      </div>
+      <div id="tool-3d" style="display: block">
+
+      </div>
     </div>
   </div>
+  <div id="export">
+    <button onclick="exportMap()">Export</button>
+  </div>
 </div>
-<!--<script src="three.js"></script>
-<script>
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild( renderer.domElement );
-
-</script>-->
 
 <script>
   const canvasB = document.getElementById("map_biomes");
   const canvasW = document.getElementById("map_water");
-  const canvasH = document.getElementById("map_height");
+  const mapHeight = document.getElementById('map_height');
 
   let color = '#000000';
   let width = 10;
   let tool = 'pen';
   let size = 720;
 
+  let scene;
+  let camera;
+  let renderer;
+  let controls;
+
+  let activeCanvas;
+  let activeContext;
+
   const ctxB = canvasB.getContext("2d");
   ctxB.imageSmoothingEnabled = false;
   const ctxW = canvasW.getContext("2d");
-  const ctxH = canvasH.getContext("2d");
 
   canvasB.addEventListener("mousemove", function (e) {
-    drawWithTool('move', e)
+    drawWithTool('move', e);
   }, false);
   canvasB.addEventListener("mousedown", function (e) {
-    drawWithTool('down', e)
+    drawWithTool('down', e);
   }, false);
   canvasB.addEventListener("mouseup", function (e) {
     drawWithTool('up', e);
   }, false);
   canvasB.addEventListener("mouseout", function (e) {
-    drawWithTool('out', e)
+    drawWithTool('out', e);
   }, false);
+
+  canvasW.addEventListener("mousemove", function (e) {
+    drawWithTool('move', e);
+  }, false);
+  canvasW.addEventListener("mousedown", function (e) {
+    drawWithTool('down', e);
+  }, false);
+  canvasW.addEventListener("mouseup", function (e) {
+    drawWithTool('up', e);
+  }, false);
+  canvasW.addEventListener("mouseout", function (e) {
+    drawWithTool('out', e);
+  }, false);
+
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+
+  init3dView();
+
+  function exportMap() {
+    var link = document.createElement('a');
+    link.download = 'Biomes_import.png';
+    link.href = canvasB.toDataURL();
+    link.click();
+    link.remove();
+  }
+
+  let imgInput = document.getElementById('imageInput');
+  imgInput.addEventListener('change', function(e) {
+    if(e.target.files) {
+      let imageFile = e.target.files[0]; //here we get the image file
+      var reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      reader.onloadend = function (e) {
+        var myImage = new Image(); // Creates image object
+        myImage.src = e.target.result; // Assigns converted image to image object
+        myImage.onload = function(ev) {
+          reset();
+
+          canvasB.width = myImage.width; // Assigns image's width to canvas
+          canvasB.height = myImage.height; // Assigns image's height to canvas
+          ctxB.drawImage(myImage,0,0); // Draws the image on canvas
+        }
+      }
+    }
+  });
+
+  function init3dView() {
+    function createStats() {
+      var stats = new Stats();
+      stats.setMode(0);
+
+      stats.domElement.style.position = 'absolute';
+      stats.domElement.style.left = '0';
+      stats.domElement.style.top = '0';
+
+      return stats;
+    }
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+    scene.add(new THREE.HemisphereLight(0xffffcc, 0x19bbdc, 1));
+
+    camera = new THREE.PerspectiveCamera( 90, 1, 0.1, 10000 );
+
+    renderer = new THREE.WebGLRenderer({ antialias : false });
+    renderer.setPixelRatio(window.devicePixelRatio * 0.5);
+    renderer.setSize( size, size );
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.zoomSpeed = 10;
+
+    const updateCameraOrbit = () => {
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+
+      controls.target.copy(camera.position).add(forward);
+    };
+
+    controls.addEventListener('end', () => {
+      updateCameraOrbit();
+    });
+
+    stats = createStats();
+
+    updateCameraOrbit();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      renderer.render( scene, camera );
+      stats.update();
+    }
+
+    animate();
+
+    mapHeight.appendChild( renderer.domElement );
+    mapHeight.appendChild( stats.domElement );
+  }
+
+  function onClick3d() {
+    console.log('click');
+
+    raycaster.setFromCamera( pointer, camera );
+
+    const intersects = raycaster.intersectObjects( scene.children );
+    console.log('intersects ', intersects.length)
+    const threeColor = new THREE.Color();
+
+    for (let i = 0; i < intersects.length; i ++) {
+      console.log(intersects[i]);
+
+      intersects[i].object.setColorAt(intersects[i].instanceId, threeColor.setHex(0xff0000));
+    }
+  }
+
+  function update3dView() {
+    renderer.setSize( size, size );
+  }
+
+  function onPointerMove( event ) {
+    // calculate pointer position in normalized device coordinates
+    // (-1 to +1) for both components
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  }
+
+  window.addEventListener( 'pointermove', onPointerMove );
+  mapHeight.addEventListener( 'click', onClick3d );
 
   function reset() {
     size = document.getElementById("size").value;
 
-    for (let canvas of [canvasB, canvasW, canvasH]) {
+    for (let canvas of [canvasB, canvasW]) {
       canvas.width = size;
       canvas.height = size;
-
-      var ctx = canvas.getContext("2d");
-
-      ctx.fillStyle = 'rgb(0,0,0)';
-      ctx.fillRect(0, 0, size, size);
     }
 
+    mapHeight.style.width = size + 'px';
+    mapHeight.style.height = size + 'px';
+
+    ctxB.fillStyle = 'rgb(0,0,0)';
+    ctxB.fillRect(0, 0, size, size);
+
+    ctxW.fillStyle = 'rgba(0,0,0,0)';
+    ctxW.fillRect(0, 0, size, size);
+
     showBiomes();
+
+    update3dView();
 
     var content = document.getElementById("content");
     content.style.display = 'block';
   }
 
   function showBiomes() {
+    activeCanvas = canvasB;
+    activeContext = ctxB;
     canvasB.style.display = 'block';
     canvasW.style.display = 'none';
-    canvasH.style.display = 'none';
+    mapHeight.style.display = 'none';
   }
 
-  function showWater() {
-    canvasB.style.display = 'none';
-    canvasW.style.display = 'block';
-    canvasH.style.display = 'none';
+  function toggleWater() {
+    if (canvasW.style.display === 'block') {
+      canvasW.style.display = 'none';
+      activeCanvas = canvasB;
+      activeContext = ctxB;
+      document.getElementById('color-water').style.display = 'none';
+      document.getElementById('color-biomes').style.display = 'block';
+      switchColor("#000000");
+      document.getElementById('toggle-water').innerHTML = "Show Water";
+    } else {
+      canvasW.style.display = 'block';
+      activeCanvas = canvasW;
+      activeContext = ctxW;
+      switchColor('#000000');
+      document.getElementById('color-water').style.display = 'block';
+      document.getElementById('color-biomes').style.display = 'none';
+      document.getElementById('toggle-water').innerHTML = "Hide Water";
+    }
   }
 
-  function showHeight() {
-    canvasB.style.display = 'none';
-    canvasW.style.display = 'none';
-    canvasH.style.display = 'block';
+  function refresh3dContent() {
+    const axesHelper = new THREE.AxesHelper( 5 );
+    axesHelper.setColors('red', 'green', 'blue')
+    scene.add( axesHelper );
+
+    const biomeImageData = ctxB.getImageData(0, 0, size, size);
+    const biomeWaterData = ctxW.getImageData(0, 0, size, size);
+
+    const workArray = [];
+    let x = 0;
+
+    for (let i = 0; i < biomeImageData.data.length / 4; i++) {
+      if (i % size === 0) {
+        x = 0;
+      }
+
+      if (!workArray[x]) {
+        workArray[x] = [];
+      }
+
+      let color = rgbToHex(biomeImageData.data[i*4], biomeImageData.data[i*4 + 1], biomeImageData.data[i*4 + 2]);
+      let waterColor = rgbToHex(biomeWaterData.data[i*4], biomeWaterData.data[i*4 + 1], biomeWaterData.data[i*4 + 2]);
+
+      if (waterColor !== '#000000') {
+        color = waterColor;
+      }
+
+      workArray[x].push(color);
+
+      x++;
+    }
+
+    let localSize = size;
+
+    const material = new THREE.MeshBasicMaterial();
+    const matrix = new THREE.Matrix4();
+    const threeColor = new THREE.Color();
+
+    const geometryBox = new THREE.BoxGeometry( 1, 100, 1 );
+    const boxes = new THREE.InstancedMesh( geometryBox, material, localSize * localSize );
+    boxes.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
+    boxes.castShadow = true;
+    boxes.receiveShadow = true;
+    scene.add( boxes );
+
+    for (let i = 0; i < localSize; i++) {
+      for (let j = 0; j < localSize; j++) {
+        matrix.setPosition(i + 0.5, 50, j + 0.5 );
+        boxes.setMatrixAt(i * localSize + j , matrix );
+        const color = workArray[i][j];
+        boxes.setColorAt(i * localSize + j, threeColor.setHex(Number('0x' + color.substring(1, color.length))));
+      }
+    }
+
+    camera.position.set(0, 200, localSize / 2);
+    controls.target = new THREE.Vector3(localSize / 4, 100, localSize / 2);
+  }
+
+  function toggle3d() {
+    if (mapHeight.style.display === 'block') {
+      document.getElementById('toggle-3d').innerHTML = "Show 3D";
+      mapHeight.style.display = 'none';
+    } else {
+      document.getElementById('toggle-3d').innerHTML = "Hide 3D";
+      mapHeight.style.display = 'block';
+      refresh3dContent();
+    }
   }
 
   function switchColor(newColor) {
@@ -180,17 +408,21 @@ MAP GENERATOR<br/>
       }
 
       if (res === 'move' && isDrawing) {
-        var x = e.clientX - canvasB.offsetLeft;
-        var y = e.clientY - canvasB.offsetTop;
+        var box = activeCanvas.getBoundingClientRect();
+
+        var x = e.clientX - box.left;
+        var y = e.clientY - box.top;
 
         drawAliasedCircle(x, y);
       }
     } else if (tool === 'fill') {
       if (res === 'down') {
-        const myImageData = ctxB.getImageData(0, 0, size, size);
+        const myImageData = activeContext.getImageData(0, 0, size, size);
 
-        var coordX = e.clientX - canvasB.offsetLeft;
-        var coordY = e.clientY - canvasB.offsetTop;
+        var box = activeCanvas.getBoundingClientRect();
+
+        var coordX = e.clientX - box.left;
+        var coordY = e.clientY - box.top;
 
         console.log("click coords is ", coordX, ":", coordY);
 
@@ -241,7 +473,7 @@ MAP GENERATOR<br/>
           iteratorValue = iterator.next();
         }
 
-        ctxB.putImageData(myImageData, 0, 0);
+        activeContext.putImageData(myImageData, 0, 0);
       }
     }
   }
@@ -270,35 +502,43 @@ MAP GENERATOR<br/>
   }
 
   function drawCircle(x, y) {
-    ctxB.beginPath();
-    ctxB.arc(x, y, width, 0, 2 * Math.PI);
-    ctxB.fillStyle = color;
-    ctxB.strokeStyle = color;
-    ctxB.fill();
-    ctxB.closePath();
+    activeContext.beginPath();
+    activeContext.arc(x, y, width, 0, 2 * Math.PI);
+    activeContext.fillStyle = color;
+    activeContext.strokeStyle = color;
+    activeContext.fill();
+    activeContext.closePath();
   }
 
   function drawAliasedCircle(xc, yc) {
-    ctxB.beginPath();
+    activeContext.beginPath();
 
     var x = width, y = 0, cd = 0;
 
     // middle line
-    ctxB.rect(xc - x, yc, width<<1, 1);
+    activeContext.rect(xc - x, yc, width<<1, 1);
 
     while (x > y) {
       cd -= (--x) - (++y);
       if (cd < 0) cd += x++;
-      ctxB.rect(xc - y, yc - x, y<<1, 1);
-      ctxB.rect(xc - x, yc - y, x<<1, 1);
-      ctxB.rect(xc - x, yc + y, x<<1, 1);
-      ctxB.rect(xc - y, yc + x, y<<1, 1);
+      activeContext.rect(xc - y, yc - x, y<<1, 1);
+      activeContext.rect(xc - x, yc - y, x<<1, 1);
+      activeContext.rect(xc - x, yc + y, x<<1, 1);
+      activeContext.rect(xc - y, yc + x, y<<1, 1);
     }
 
-    ctxB.fillStyle = color;
-    ctxB.strokeStyle = color;
-    ctxB.fill();
-    ctxB.closePath();
+    if (activeContext === ctxW && color === '#000000') {
+      console.log('erase');
+      activeContext.globalCompositeOperation = 'destination-out';
+      activeContext.fillStyle = '#000000';
+      activeContext.strokeStyle = '#000000';
+    } else {
+      activeContext.globalCompositeOperation = 'source-over';
+      activeContext.fillStyle = color;
+      activeContext.strokeStyle = color;
+    }
+    activeContext.fill();
+    activeContext.closePath();
   }
 
   var logged = false;
