@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MAP Generator</title>
+
+  <script src="fabric.min.js"></script>
+
+  <style>
+        body {
+          margin: 0;
+        }
+
+        canvas {
+          border: 1px solid black;
+        }
+
+        #drawing {
+          display: flex;
+          flex-flow: row;
+        }
+
+        .colorPicker {
+          width: 60px;
+          height: 30px;
+          border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+MAP GENERATOR<br/>
+
+<input type="number" id="size" value="720" />
+<button onclick="reset()">init/reset</button><br />
+
+<div id="content" style="display: none">
+  <div id="mapbar">
+    <button onclick="showBiomes()">Show Biomes</button>
+    <button onclick="showWater()">Show Water</button>
+    <button onclick="showHeight()">Show Height</button><br />
+  </div>
+  <div id="drawing">
+    <div id="maps">
+      <canvas id="map_biomes" width="720" height="720" style="display: none"></canvas>
+      <canvas id="map_water" width="720" height="720" style="display: none"></canvas>
+      <canvas id="map_height" width="720" height="720" style="display: none"></canvas>
+    </div>
+    <div id="toolbar">
+      TOOLBAR<br/>
+      <button onclick="toolPen()">PEN</button>
+      <button onclick="toolFill()">FILL</button><br />
+      <input type="number" id="brushWidth" onchange="changeBrushWidth()" value="10" /><br />
+      <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Empty<br />
+      <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> Deep Ocean<br />
+      <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Ocean<br />
+      <button class="colorPicker" style="background-color: #fafad2" onclick="switchColor('#fafad2')"></button> Coast<br />
+      <button class="colorPicker" style="background-color: #90ee90" onclick="switchColor('#90ee90')"></button> Grasslands<br />
+      <button class="colorPicker" style="background-color: #b8860b" onclick="switchColor('#b8860b')"></button> WarmForest<br />
+      <button class="colorPicker" style="background-color: #f4a460" onclick="switchColor('#f4a460')"></button> Desert<br />
+      <button class="colorPicker" style="background-color: #20b2aa" onclick="switchColor('#20b2aa')"></button> RainForest<br />
+      <button class="colorPicker" style="background-color: #006400" onclick="switchColor('#006400')"></button> Wetland<br />
+      <button class="colorPicker" style="background-color: #228b22" onclick="switchColor('#228b22')"></button> ColdForest<br />
+      <button class="colorPicker" style="background-color: #6b8e23" onclick="switchColor('#6b8e23')"></button> Taiga<br />
+      <button class="colorPicker" style="background-color: #bdb76b" onclick="switchColor('#bdb76b')"></button> Tundra<br />
+      <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Ice<br />
+    </div>
+  </div>
+</div>
+<!--<script src="three.js"></script>
+<script>
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
+
+</script>-->
+
+<script>
+  const canvasB = document.getElementById("map_biomes");
+  const canvasW = document.getElementById("map_water");
+  const canvasH = document.getElementById("map_height");
+
+  let color = '#000000';
+  let width = 10;
+  let tool = 'pen';
+  let size = 720;
+
+  const ctxB = canvasB.getContext("2d");
+  ctxB.imageSmoothingEnabled = false;
+  const ctxW = canvasW.getContext("2d");
+  const ctxH = canvasH.getContext("2d");
+
+  canvasB.addEventListener("mousemove", function (e) {
+    drawWithTool('move', e)
+  }, false);
+  canvasB.addEventListener("mousedown", function (e) {
+    drawWithTool('down', e)
+  }, false);
+  canvasB.addEventListener("mouseup", function (e) {
+    drawWithTool('up', e);
+  }, false);
+  canvasB.addEventListener("mouseout", function (e) {
+    drawWithTool('out', e)
+  }, false);
+
+  function reset() {
+    size = document.getElementById("size").value;
+
+    for (let canvas of [canvasB, canvasW, canvasH]) {
+      canvas.width = size;
+      canvas.height = size;
+
+      var ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = 'rgb(0,0,0)';
+      ctx.fillRect(0, 0, size, size);
+    }
+
+    showBiomes();
+
+    var content = document.getElementById("content");
+    content.style.display = 'block';
+  }
+
+  function showBiomes() {
+    canvasB.style.display = 'block';
+    canvasW.style.display = 'none';
+    canvasH.style.display = 'none';
+  }
+
+  function showWater() {
+    canvasB.style.display = 'none';
+    canvasW.style.display = 'block';
+    canvasH.style.display = 'none';
+  }
+
+  function showHeight() {
+    canvasB.style.display = 'none';
+    canvasW.style.display = 'none';
+    canvasH.style.display = 'block';
+  }
+
+  function switchColor(newColor) {
+    color = newColor;
+    console.log("color is now " + color);
+  }
+
+  function changeBrushWidth() {
+    width = document.getElementById("brushWidth").value;
+    console.log("color is now " + width);
+  }
+
+  function toolPen() {
+    tool = 'pen';
+    document.getElementById('brushWidth').style.display = 'block';
+    console.log('tool is now' + tool)
+  }
+
+  function toolFill() {
+    tool = 'fill';
+    document.getElementById('brushWidth').style.display = 'none';
+    console.log('tool is now' + tool)
+  }
+
+  var isDrawing = false;
+
+  function drawWithTool(res, e) {
+    if (res === 'up' || res === 'out') {
+      isDrawing = false;
+    }
+
+    if (tool === 'pen') {
+      if (res === 'down') {
+        isDrawing = true;
+
+        res = 'move';
+      }
+
+      if (res === 'move' && isDrawing) {
+        var x = e.clientX - canvasB.offsetLeft;
+        var y = e.clientY - canvasB.offsetTop;
+
+        drawAliasedCircle(x, y);
+      }
+    } else if (tool === 'fill') {
+      if (res === 'down') {
+        const myImageData = ctxB.getImageData(0, 0, size, size);
+
+        var coordX = e.clientX - canvasB.offsetLeft;
+        var coordY = e.clientY - canvasB.offsetTop;
+
+        console.log("click coords is ", coordX, ":", coordY);
+
+        const workArray = [];
+        let x = 0;
+
+        for (let i = 0; i < myImageData.data.length / 4; i++) {
+          if (i % size === 0) {
+            x = 0;
+          }
+
+          if (!workArray[x]) {
+            workArray[x] = [];
+          }
+
+          workArray[x].push(rgbToHex(myImageData.data[i*4], myImageData.data[i*4 + 1], myImageData.data[i*4 + 2]));
+
+          x++;
+        }
+
+        console.log(myImageData);
+        console.log(workArray);
+
+        const visited = [];
+        const toBeVisited = [`${coordX}:${coordY}`];
+        const firstColor = workArray[coordX][coordY];
+        const colorRgb = hexToRgb(color);
+
+        while (toBeVisited.length > 0) {
+          const coords = toBeVisited.shift();
+          visited.push(coords);
+          let [x, y] = coords.split(':');
+
+          x = parseInt(x);
+          y = parseInt(y);
+
+          if (workArray[x][y] === firstColor) {
+            myImageData.data[(x + y * size) * 4] = colorRgb.r;
+            myImageData.data[(x + y * size) * 4 + 1] = colorRgb.g;
+            myImageData.data[(x + y * size) * 4 + 2] = colorRgb.b;
+
+            const handleNeighbor = (posX, posY) => {
+              if (posY >= size || posY < 0 || posX >= size || posX < 0) {
+                return;
+              }
+
+              const coords = `${posX}:${posY}`;
+
+              if (!toBeVisited.includes(coords) && !visited.includes(coords)) {
+                toBeVisited.push(coords);
+              }
+            }
+
+            handleNeighbor(x + 1, y + 1);
+            handleNeighbor(x    , y + 1);
+            handleNeighbor(x - 1, y + 1);
+
+            handleNeighbor(x + 1, y);
+            handleNeighbor(x - 1, y);
+
+            handleNeighbor(x + 1, y - 1);
+            handleNeighbor(x    , y - 1);
+            handleNeighbor(x - 1, y - 1);
+          }
+
+          console.log("Remaining to be visited:", toBeVisited.length);
+          console.log("visited:", visited.length);
+        }
+
+        ctxB.putImageData(myImageData, 0, 0);
+      }
+    }
+  }
+
+  const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+
+  function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  function drawCircle(x, y) {
+    ctxB.beginPath();
+    ctxB.arc(x, y, width, 0, 2 * Math.PI);
+    ctxB.fillStyle = color;
+    ctxB.strokeStyle = color;
+    ctxB.fill();
+    ctxB.closePath();
+  }
+
+  function drawAliasedCircle(xc, yc) {
+    ctxB.beginPath();
+
+    var x = width, y = 0, cd = 0;
+
+    // middle line
+    ctxB.rect(xc - x, yc, width<<1, 1);
+
+    while (x > y) {
+      cd -= (--x) - (++y);
+      if (cd < 0) cd += x++;
+      ctxB.rect(xc - y, yc - x, y<<1, 1);
+      ctxB.rect(xc - x, yc - y, x<<1, 1);
+      ctxB.rect(xc - x, yc + y, x<<1, 1);
+      ctxB.rect(xc - y, yc + x, y<<1, 1);
+    }
+
+    ctxB.fillStyle = color;
+    ctxB.strokeStyle = color;
+    ctxB.fill();
+    ctxB.closePath();
+  }
+
+  var logged = false;
+  function logFirst(...msg) {
+    if (!logged) {
+      logged = true;
+      console.log(...msg);
+    }
+  }
+</script>
+</body>
+</html>
