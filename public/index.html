@@ -211,57 +211,50 @@ MAP GENERATOR<br/>
           x++;
         }
 
-        console.log(myImageData);
-        console.log(workArray);
-
-        const visited = [];
-        const toBeVisited = [`${coordX}:${coordY}`];
+        const toBeVisited = new Set();
+        toBeVisited.add(`${coordX}:${coordY}`);
         const firstColor = workArray[coordX][coordY];
         const colorRgb = hexToRgb(color);
 
-        while (toBeVisited.length > 0) {
-          const coords = toBeVisited.shift();
-          visited.push(coords);
-          let [x, y] = coords.split(':');
+        const iterator = toBeVisited.values();
+        let iteratorValue = iterator.next();
+
+        while (!iteratorValue.done) {
+          let [x, y] = iteratorValue.value.split(':');
 
           x = parseInt(x);
           y = parseInt(y);
 
           if (workArray[x][y] === firstColor) {
+            workArray[x][y] = colorRgb;
+
             myImageData.data[(x + y * size) * 4] = colorRgb.r;
             myImageData.data[(x + y * size) * 4 + 1] = colorRgb.g;
             myImageData.data[(x + y * size) * 4 + 2] = colorRgb.b;
 
-            const handleNeighbor = (posX, posY) => {
-              if (posY >= size || posY < 0 || posX >= size || posX < 0) {
-                return;
-              }
-
-              const coords = `${posX}:${posY}`;
-
-              if (!toBeVisited.includes(coords) && !visited.includes(coords)) {
-                toBeVisited.push(coords);
-              }
-            }
-
-            handleNeighbor(x + 1, y + 1);
-            handleNeighbor(x    , y + 1);
-            handleNeighbor(x - 1, y + 1);
-
-            handleNeighbor(x + 1, y);
-            handleNeighbor(x - 1, y);
-
-            handleNeighbor(x + 1, y - 1);
-            handleNeighbor(x    , y - 1);
-            handleNeighbor(x - 1, y - 1);
+            handleNeighbor(x    , y + 1, toBeVisited, workArray, firstColor);
+            handleNeighbor(x + 1, y,     toBeVisited, workArray, firstColor);
+            handleNeighbor(x - 1, y,     toBeVisited, workArray, firstColor);
+            handleNeighbor(x    , y - 1, toBeVisited, workArray, firstColor);
           }
 
-          console.log("Remaining to be visited:", toBeVisited.length);
-          console.log("visited:", visited.length);
+          iteratorValue = iterator.next();
         }
 
         ctxB.putImageData(myImageData, 0, 0);
       }
+    }
+  }
+
+  function handleNeighbor(posX, posY, toBeVisited, workArray, firstColor) {
+    if (posY >= size || posY < 0 || posX >= size || posX < 0) {
+      return;
+    }
+
+    const coords = `${posX}:${posY}`;
+
+    if (workArray[posX][posY] === firstColor) {
+      toBeVisited.add(coords);
     }
   }
 
@@ -314,6 +307,16 @@ MAP GENERATOR<br/>
       logged = true;
       console.log(...msg);
     }
+  }
+
+  var logEveryCpt = 0;
+  function logEvery(nb, ...msg) {
+    if (logEveryCpt > nb) {
+      logEveryCpt = 0;
+      console.log(...msg);
+    }
+
+    logEveryCpt++;
   }
 </script>
 </body>
