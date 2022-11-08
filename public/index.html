@@ -224,14 +224,17 @@ MAP GENERATOR<br/>
 
     raycaster.setFromCamera( pointer, camera );
 
-    const intersects = raycaster.intersectObjects( scene.children );
-    console.log('intersects ', intersects.length)
+    const intersects = raycaster.intersectObjects( scene.children ).filter(a => a.faceIndex === 5 || a.faceIndex === 4);
     const threeColor = new THREE.Color();
 
     for (let i = 0; i < intersects.length; i ++) {
-      console.log(intersects[i]);
+      if (i=== 0) console.log(intersects[i]);
 
       intersects[i].object.setColorAt(intersects[i].instanceId, threeColor.setHex(0xff0000));
+    }
+
+    if (intersects.length) {
+      intersects[0].object.instanceColor.needsUpdate = true;
     }
   }
 
@@ -242,8 +245,11 @@ MAP GENERATOR<br/>
   function onPointerMove( event ) {
     // calculate pointer position in normalized device coordinates
     // (-1 to +1) for both components
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    const box = mapHeight.getBoundingClientRect();
+
+    pointer.x = ( (event.clientX - box.left) / size ) * 2 - 1;
+    pointer.y = - ( (event.clientY - box.top) / size ) * 2 + 1;
+
   }
 
   window.addEventListener( 'pointermove', onPointerMove );
@@ -340,7 +346,7 @@ MAP GENERATOR<br/>
     const matrix = new THREE.Matrix4();
     const threeColor = new THREE.Color();
 
-    const geometryBox = new THREE.BoxGeometry( 1, 100, 1 );
+    const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
     const boxes = new THREE.InstancedMesh( geometryBox, material, localSize * localSize );
     boxes.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
     boxes.castShadow = true;
