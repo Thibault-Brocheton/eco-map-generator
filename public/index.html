@@ -86,7 +86,8 @@ MAP GENERATOR<br/>
       Width:<input type="number" id="elevationWidth" onchange="changeElevationWidth()" style="display: none;" value="10" /><br />
       Height:<input type="number" id="elevationHeight" onchange="changeElevationHeight()" style="display: none;" value="10" /><br />
       <button onclick="togglePlaneWater()">Toggle Water</button><br />
-      <button onclick="generateHeightmapBasic()">Generate HeightMap (basic)</button>
+      <button onclick="generateHeightmapBasic()">Generate HeightMap (basic)</button><br />
+      Loop: <input type="number" id="smooth-loop" value="1" style="width: 30px" /> - Width: <input type="number" id="smooth-width" value="1" style="width: 30px" /> - <button onclick="smoothHeightMap()">Smooth HeightMap</button><br />
     </div>
   </div>
   <div id="export">
@@ -531,6 +532,90 @@ MAP GENERATOR<br/>
     instanceMesh.instanceMatrix.needsUpdate = true;
   }
 
+  function getIdNeighbours(id, width) {
+    let leftOffset = 0;
+    let rightOffset = 0;
+    let topOffset = 0;
+    let bottomOffset = 0;
+
+    if (id % size === 0) {
+      leftOffset = size;
+    }
+
+    if (id - size < 0) {
+      topOffset = size * size;
+    }
+
+    if (id + size > size*size) {
+      bottomOffset = -size * size;
+    }
+
+    if ((id + 1) % size === 0) {
+      rightOffset = -size;
+    }
+
+    const neighbours = [];
+
+    neighbours.push(id - size - 1 + leftOffset + topOffset);
+    neighbours.push(id - size + topOffset);
+    neighbours.push(id - size + 1 + rightOffset + topOffset);
+    neighbours.push(id - 1 + leftOffset);
+    neighbours.push(id);
+    neighbours.push(id + 1 + rightOffset);
+    neighbours.push(id + size - 1 + leftOffset + bottomOffset);
+    neighbours.push(id + size + bottomOffset);
+    neighbours.push(id + size + 1 + rightOffset + bottomOffset);
+
+    return neighbours;
+  }
+
+  function smoothHeightMap() {
+    const newHeight = [];
+
+    let loop = parseInt(document.getElementById('smooth-loop').value);
+
+    if (loop <= 0) {
+      loop = 1;
+    }
+
+    let width = parseInt(document.getElementById('smooth-width').value);
+
+    if (width <= 0) {
+      width = 1;
+    }
+
+    const neighbours = [];
+
+    for (let k = 0; k < Math.sqrt(1 + width * 2); k++) {
+      neighbours.push(new THREE.Matrix4());
+    }
+
+    for (let k = 0; k < loop; k++) {
+      for (let i = 0; i < size * size; i++) {
+        const neighboursId = getIdNeighbours(i, width);
+
+        for (let j = 0; j < neighboursId.length; j++) {
+          instanceMesh.getMatrixAt(neighboursId[j], neighbours[j]);
+        }
+
+        const averageHeight = neighbours.map(m => m.elements[5]).reduce((acc, cur) => acc + cur) / neighbours.length;
+
+        newHeight.push(averageHeight);
+      }
+    }
+
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < size * size; i++) {
+      instanceMesh.getMatrixAt(i, matrix);
+
+      handleHeightSet(matrix, newHeight[i]);
+
+      instanceMesh.setMatrixAt(i, matrix);
+    }
+
+    instanceMesh.instanceMatrix.needsUpdate = true;
+  }
+
   function update3dView() {
     renderer.setSize( size, size );
   }
@@ -548,7 +633,7 @@ MAP GENERATOR<br/>
   window.addEventListener( 'pointermove', onPointerMove );
 
   function reset() {
-    size = document.getElementById("size").value;
+    size = parseInt(document.getElementById("size").value);
 
     for (let canvas of [canvasB, canvasW, canvasHidden]) {
       canvas.width = size;
