@@ -11,60 +11,108 @@ const biomeColorToName = {
   "#6b8e23": "Taiga",
   "#bdb76b": "Tundra",
   "#ffffff": "Ice",
-}
+};
 
 const waterColorToName = {
   "#4682b4": "River",
   "#87cefa": "Lake",
-}
+};
 
-const biomeHeightAssoc = {
+const biomesConfiguration = {
   "DeepOcean": {
     min: -1,
     max: -0.4,
+    minTemp: 0,
+    maxTemp: 0.4,
+    minMoisture: 0,
+    maxMoisture: 1,
   },
   "Ocean": {
     min: -0.2,
     max: -0.05,
+    minTemp: 0.4,
+    maxTemp: 1,
+    minMoisture: 0,
+    maxMoisture: 1,
   },
   "Coast": {
     min: 0.01,
     max: 0.01,
+    minTemp: 0,
+    maxTemp: 1,
+    minMoisture: 0,
+    maxMoisture: 1,
   },
   "Grasslands": {
     min: 0.02,
     max: 0.4,
+    minTemp: 0.4,
+    maxTemp: 0.8,
+    minMoisture: 0.3,
+    maxMoisture: 0.5,
   },
   "WarmForest": {
     min: 0.1,
     max: 0.5,
+    minTemp: 0.5,
+    maxTemp: 0.8,
+    minMoisture: 0.5,
+    maxMoisture: 0.6,
   },
   "Desert": {
     min: 0.02,
     max: 0.2,
+    minTemp: 0.7,
+    maxTemp: 1,
+    minMoisture: 0,
+    maxMoisture: 0.3,
   },
   "RainForest": {
     min: 0.1,
     max: 0.5,
+    minTemp: 0.6,
+    maxTemp: 0.8,
+    minMoisture: 0.7,
+    maxMoisture: 1,
   },
   "Wetland": {
     min: 0.02,
     max: 0.3,
+    minTemp: 0.4,
+    maxTemp: 0.6,
+    minMoisture: 0.6,
+    maxMoisture: 0.8,
   },
   "ColdForest": {
     min: 0.1,
     max: 0.7,
+    minTemp: 0.2,
+    maxTemp: 0.5,
+    minMoisture: 0.5,
+    maxMoisture: 0.6,
   },
   "Taiga": {
     min: 0.3,
     max: 1,
+    minTemp: 0.2,
+    maxTemp: 0.3,
+    minMoisture: 0.2,
+    maxMoisture: 0.5,
   },
   "Tundra": {
     min: 0.4,
     max: 1,
+    minTemp: 0.1,
+    maxTemp: 0.2,
+    minMoisture: 0,
+    maxMoisture: 0.6,
   },
   "Ice": {
     min: 0.6,
     max: 1,
+    minTemp: 0,
+    maxTemp: 0.1,
+    minMoisture: 0,
+    maxMoisture: 0.6,
   },
 };

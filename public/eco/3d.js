@@ -169,7 +169,7 @@ function generateHeightmapBasic() {
 
     if (!biomeColorToName[color]) continue;
 
-    const biomeHeight = biomeHeightAssoc[biomeColorToName[color]];
+    const biomeHeight = biomesConfiguration[biomeColorToName[color]];
 
     const coeff = ((biomeHeight.min + biomeHeight.max) / 2);
 
@@ -207,7 +207,7 @@ function generateHeightmapPerlin() {
       const color = rgbToHex(myImageData.data[id * 4], myImageData.data[id * 4 + 1], myImageData.data[id * 4 + 2]);
       if (!biomeColorToName[color]) continue;
 
-      const biomeHeight = getRealMinMax(biomeHeightAssoc[biomeColorToName[color]]);
+      const biomeHeight = getRealMinMax(biomesConfiguration[biomeColorToName[color]]);
 
       let newElevation = matrix.elements[5] + Math.floor(p * power);
 
@@ -382,6 +382,7 @@ function smoothHeightMap() {
     width = 1;
   }
 
+  const myImageData = ctxB.getImageData(0, 0, size, size);
   const neighbours = [];
 
   for (let k = 0; k < Math.pow(1 + width * 2, 2); k++) {
@@ -407,7 +408,22 @@ function smoothHeightMap() {
     for (let i = 0; i < size * size; i++) {
       instanceMesh.getMatrixAt(i, matrix);
 
-      handleHeightSet(matrix, newHeight[i]);
+      const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
+      if (!biomeColorToName[color]) continue;
+
+      const biomeHeight = getRealMinMax(biomesConfiguration[biomeColorToName[color]]);
+
+      let newElevation = newHeight[i];
+
+      if (newElevation < biomeHeight.min) {
+        newElevation = biomeHeight.min;
+      }
+
+      if (newElevation > biomeHeight.max) {
+        newElevation = biomeHeight.max;
+      }
+
+      handleHeightSet(matrix, newElevation);
 
       instanceMesh.setMatrixAt(i, matrix);
     }

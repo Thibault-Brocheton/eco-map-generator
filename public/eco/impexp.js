@@ -1,6 +1,6 @@
 function exportBiome() {
   var link = document.createElement('a');
-  link.download = 'Biomes_import.png';
+  link.download = 'Biomes-import.png';
   link.href = canvasB.toDataURL();
   link.click();
   link.remove();
@@ -8,15 +8,38 @@ function exportBiome() {
 
 function exportWater() {
   var link = document.createElement('a');
-  link.download = 'Water_import.png';
+  link.download = 'Water-import.png';
   link.href = canvasW.toDataURL();
+  link.click();
+  link.remove();
+}
+
+function exportWaterLevel() {
+  var link = document.createElement('a');
+  link.download = 'WaterLevel-import.png';
+
+  const myImageData = ctxHidden.getImageData(0, 0, size, size);
+  const waterData = ctxW.getImageData(0, 0, size, size);
+
+  const a = logEvery(200);
+
+  for (let i = 0; i < size * size; i++) {
+    myImageData.data[i * 4]     = waterData.data[i * 4] > 0 ? 134 : 0;
+    myImageData.data[i * 4 + 1] = waterData.data[i * 4 + 1] > 0 ? 134 : 0;
+    myImageData.data[i * 4 + 2] = waterData.data[i * 4 + 2] > 0 ? 134 : 0;
+    myImageData.data[i * 4 + 3] = waterData.data[i * 4 + 3] > 0 ? 255 : 0;
+  }
+
+  ctxHidden.putImageData(myImageData, 0, 0);
+
+  link.href = canvasHidden.toDataURL();
   link.click();
   link.remove();
 }
 
 function exportHeight() {
   var link = document.createElement('a');
-  link.download = 'Heightmap_import.png';
+  link.download = 'Height-import.png';
 
   const myImageData = ctxHidden.getImageData(0, 0, size, size);
   const matrix = new THREE.Matrix4();
@@ -25,12 +48,77 @@ function exportHeight() {
     instanceMesh.getMatrixAt(i, matrix);
     const yValue = matrix.elements[5];
 
-    const normalizedY = yValue / maxHeight * 255;
+    let normalizedY;
+    if (yValue > waterHeight) {
+      normalizedY = (((yValue - waterHeight) / maxHeight * 0.5) + 0.5) * 255;
+    } else {
+      normalizedY = ((((waterHeight - yValue) / -waterHeight) * 0.5) + 0.5) * 255;
+    }
 
-    myImageData.data[i * 4]     = 255;
-    myImageData.data[i * 4 + 1] = 255;
-    myImageData.data[i * 4 + 2] = 255;
-    myImageData.data[i * 4 + 3] = normalizedY;
+    myImageData.data[i * 4]     = normalizedY;
+    myImageData.data[i * 4 + 1] = normalizedY;
+    myImageData.data[i * 4 + 2] = normalizedY;
+    myImageData.data[i * 4 + 3] = 255;
+  }
+
+  ctxHidden.putImageData(myImageData, 0, 0);
+
+  link.href = canvasHidden.toDataURL();
+  link.click();
+  link.remove();
+}
+
+function exportTemperature() {
+  var link = document.createElement('a');
+  link.download = 'Temperature-import.png';
+
+  const myImageData = ctxHidden.getImageData(0, 0, size, size);
+
+  const biomeImage = ctxB.getImageData(0, 0, size, size);
+
+  for (let i = 0; i < size * size; i++) {
+    const color = rgbToHex(biomeImage.data[i * 4], biomeImage.data[i * 4 + 1], biomeImage.data[i * 4 + 2]);
+
+    if (!biomeColorToName[color]) continue;
+    const biomeConfig = biomesConfiguration[biomeColorToName[color]];
+
+    const avg = (biomeConfig.minTemp + biomeConfig.maxTemp) / 2
+    const yValue = noise.perlin2(i % size / 200, Math.floor(i / size) / 200);
+
+    myImageData.data[i * 4]     = (Math.max(Math.min(avg + yValue, biomeConfig.maxTemp), biomeConfig.minTemp)) * 255;
+    myImageData.data[i * 4 + 1] = (Math.max(Math.min(avg + yValue, biomeConfig.maxTemp), biomeConfig.minTemp)) * 255;
+    myImageData.data[i * 4 + 2] = (Math.max(Math.min(avg + yValue, biomeConfig.maxTemp), biomeConfig.minTemp)) * 255;
+    myImageData.data[i * 4 + 3] = 255;
+  }
+
+  ctxHidden.putImageData(myImageData, 0, 0);
+
+  link.href = canvasHidden.toDataURL();
+  link.click();
+  link.remove();
+}
+
+function exportMoisture() {
+  var link = document.createElement('a');
+  link.download = 'Moisture-import.png';
+
+  const myImageData = ctxHidden.getImageData(0, 0, size, size);
+
+  const biomeImage = ctxB.getImageData(0, 0, size, size);
+
+  for (let i = 0; i < size * size; i++) {
+    const color = rgbToHex(biomeImage.data[i * 4], biomeImage.data[i * 4 + 1], biomeImage.data[i * 4 + 2]);
+
+    if (!biomeColorToName[color]) continue;
+    const biomeConfig = biomesConfiguration[biomeColorToName[color]];
+
+    const avg = (biomeConfig.minMoisture + biomeConfig.maxMoisture) / 2
+    const yValue = noise.perlin2(i % size / 50, Math.floor(i / size) / 50) / 3;
+
+    myImageData.data[i * 4]     = (Math.max(Math.min(avg + yValue, biomeConfig.maxMoisture), biomeConfig.minMoisture)) * 255;
+    myImageData.data[i * 4 + 1] = (Math.max(Math.min(avg + yValue, biomeConfig.maxMoisture), biomeConfig.minMoisture)) * 255;
+    myImageData.data[i * 4 + 2] = (Math.max(Math.min(avg + yValue, biomeConfig.maxMoisture), biomeConfig.minMoisture)) * 255;
+    myImageData.data[i * 4 + 3] = 255;
   }
 
   ctxHidden.putImageData(myImageData, 0, 0);
