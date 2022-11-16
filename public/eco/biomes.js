@@ -33,21 +33,21 @@ function drawWithTool(res, e) {
     }
 
     if (res === 'move' && isDrawing) {
-      var box = activeCanvas.getBoundingClientRect();
+      let box = window.state.activeCanvas.getBoundingClientRect();
 
-      var x = e.clientX - box.left;
-      var y = e.clientY - box.top;
+      let x = e.clientX - Math.floor(box.left);
+      let y = e.clientY - Math.floor(box.top);
 
       drawAliasedCircle(x, y);
     }
   } else if (tool === 'fill') {
     if (res === 'down') {
-      const myImageData = activeContext.getImageData(0, 0, size, size);
+      const myImageData = window.state.activeContext.getImageData(0, 0, size, size);
 
-      var box = activeCanvas.getBoundingClientRect();
+      let box = window.state.activeCanvas.getBoundingClientRect();
 
-      var coordX = e.clientX - box.left;
-      var coordY = e.clientY - box.top;
+      let coordX = e.clientX - Math.floor(box.left);
+      let coordY = e.clientY - Math.floor(box.top);
 
       console.log("click coords is ", coordX, ":", coordY);
 
@@ -98,40 +98,40 @@ function drawWithTool(res, e) {
         iteratorValue = iterator.next();
       }
 
-      activeContext.putImageData(myImageData, 0, 0);
+      window.state.activeContext.putImageData(myImageData, 0, 0);
     }
   }
 }
 
 function drawAliasedCircle(xc, yc) {
-  activeContext.beginPath();
+  window.state.activeContext.beginPath();
 
   var x = width, y = 0, cd = 0;
 
   // middle line
-  activeContext.rect(xc - x, yc, width<<1, 1);
+  window.state.activeContext.rect(xc - x, yc, width<<1, 1);
 
   while (x > y) {
     cd -= (--x) - (++y);
     if (cd < 0) cd += x++;
-    activeContext.rect(xc - y, yc - x, y<<1, 1);
-    activeContext.rect(xc - x, yc - y, x<<1, 1);
-    activeContext.rect(xc - x, yc + y, x<<1, 1);
-    activeContext.rect(xc - y, yc + x, y<<1, 1);
+    window.state.activeContext.rect(xc - y, yc - x, y<<1, 1);
+    window.state.activeContext.rect(xc - x, yc - y, x<<1, 1);
+    window.state.activeContext.rect(xc - x, yc + y, x<<1, 1);
+    window.state.activeContext.rect(xc - y, yc + x, y<<1, 1);
   }
 
-  if (activeContext === ctxW && color === '#000000') {
+  if (window.state.activeContext === waterColorToName && color === '#000000') {
     console.log('erase');
-    activeContext.globalCompositeOperation = 'destination-out';
-    activeContext.fillStyle = '#000000';
-    activeContext.strokeStyle = '#000000';
+    window.state.activeContext.globalCompositeOperation = 'destination-out';
+    window.state.activeContext.fillStyle = '#000000';
+    window.state.activeContext.strokeStyle = '#000000';
   } else {
-    activeContext.globalCompositeOperation = 'source-over';
-    activeContext.fillStyle = color;
-    activeContext.strokeStyle = color;
+    window.state.activeContext.globalCompositeOperation = 'source-over';
+    window.state.activeContext.fillStyle = color;
+    window.state.activeContext.strokeStyle = color;
   }
-  activeContext.fill();
-  activeContext.closePath();
+  window.state.activeContext.fill();
+  window.state.activeContext.closePath();
 }
 
 function handleNeighbor(posX, posY, toBeVisited, workArray, firstColor) {

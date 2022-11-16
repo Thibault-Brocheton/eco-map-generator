@@ -1,7 +1,99 @@
+function importExistingMap(eventChange) {
+  const files = eventChange.target.files;
+
+  if (!files || !files.length) {
+    return;
+  }
+
+  if (files.length > 6) {
+    return alert("Maximum 6 images must be selected.");
+  }
+
+  const images = [];
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = function (eventLoadEnd) {
+      var myImage = new Image(); // Creates image object
+      myImage.src = eventLoadEnd.target.result.toString(); // Assigns converted image to image object
+      myImage.id = file.name;
+      myImage.onload = function() {
+        images.push(myImage);
+
+        if (images.length === files.length) {
+          loadMap(images);
+        }
+      }
+    }
+  }
+}
+
+function loadMap(images) {
+  const biome = images.find(i => i.id.toLowerCase().startsWith('biomes.'));
+
+  if (!biome) {
+    return alert('You need to select at least one image named "Biomes".');
+  }
+
+  const width = biome.width;
+  const height = biome.height;
+
+  if (width !== height || images.filter(i => i.width === width && i.height === height).length !== images.length) {
+    return alert('All files should have the same size, and be square (width = height).');
+  }
+
+  window.state.size = width;
+
+  biomeCanvas.width = width;
+  biomeCanvas.height = height;
+  biomeContext.drawImage(biome, 0, 0);
+
+  const water = images.find(i => i.id.toLowerCase().startsWith('water.'));
+
+  if (water) {
+    waterCanvas.width = width;
+    waterCanvas.height = height;
+    waterContext.drawImage(water, 0, 0);
+  }
+
+  const temperature = images.find(i => i.id.toLowerCase().startsWith('temperature.'));
+
+  if (temperature) {
+    temperatureCanvas.width = width;
+    temperatureCanvas.height = height;
+    temperatureContext.drawImage(temperature, 0, 0);
+  }
+
+  const rainfall = images.find(i => i.id.toLowerCase().startsWith('rainfall.'));
+
+  if (rainfall) {
+    rainfallCanvas.width = width;
+    rainfallCanvas.height = height;
+    rainfallContext.drawImage(rainfall, 0, 0);
+  }
+
+  const heightImage = images.find(i => i.id.toLowerCase().startsWith('height.'));
+
+  if (heightImage) {
+    heightCanvas.width = width;
+    heightCanvas.height = height;
+    heightContext.drawImage(heightImage, 0, 0);
+  }
+
+  const waterLevel = images.find(i => i.id.toLowerCase().includes('waterlevel.'));
+
+  if (waterLevel) {
+    heightContext
+    heightContext.drawImage(waterLevel, 0, 0); // Draws the image on top of height
+  }
+
+  enterMapEdition();
+}
+
 function exportBiome() {
   var link = document.createElement('a');
   link.download = 'Biomes-import.png';
-  link.href = canvasB.toDataURL();
+  link.href = biomeCanvas.toDataURL();
   link.click();
   link.remove();
 }
@@ -9,7 +101,7 @@ function exportBiome() {
 function exportWater() {
   var link = document.createElement('a');
   link.download = 'Water-import.png';
-  link.href = canvasW.toDataURL();
+  link.href = waterCanvas.toDataURL();
   link.click();
   link.remove();
 }
@@ -103,7 +195,6 @@ function exportMoisture() {
   link.download = 'Moisture-import.png';
 
   const myImageData = ctxHidden.getImageData(0, 0, size, size);
-
   const biomeImage = ctxB.getImageData(0, 0, size, size);
 
   for (let i = 0; i < size * size; i++) {
@@ -112,12 +203,14 @@ function exportMoisture() {
     if (!biomeColorToName[color]) continue;
     const biomeConfig = biomesConfiguration[biomeColorToName[color]];
 
-    const avg = (biomeConfig.minMoisture + biomeConfig.maxMoisture) / 2
-    const yValue = noise.perlin2(i % size / 50, Math.floor(i / size) / 50) / 3;
+    const avg = (biomeConfig.minMoisture + biomeConfig.maxMoisture) / 2;
+    const diff = biomeConfig.maxMoisture - biomeConfig.minMoisture;
 
-    myImageData.data[i * 4]     = (Math.max(Math.min(avg + yValue, biomeConfig.maxMoisture), biomeConfig.minMoisture)) * 255;
-    myImageData.data[i * 4 + 1] = (Math.max(Math.min(avg + yValue, biomeConfig.maxMoisture), biomeConfig.minMoisture)) * 255;
-    myImageData.data[i * 4 + 2] = (Math.max(Math.min(avg + yValue, biomeConfig.maxMoisture), biomeConfig.minMoisture)) * 255;
+    const yValue = biomeConfig.minMoisture + Math.abs(noise.perlin2((i % size) / 50, Math.floor(i / size) / 50)) * diff;
+
+    myImageData.data[i * 4]     = yValue * 255;
+    myImageData.data[i * 4 + 1] = yValue * 255;
+    myImageData.data[i * 4 + 2] = yValue * 255;
     myImageData.data[i * 4 + 3] = 255;
   }
 
@@ -133,6 +226,8 @@ function exportAll() {
   exportWater();
   exportHeight();
 }
+
+
 
 function importBiome(e) {
   if(e.target.files) {

@@ -1,48 +1,52 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const canvasB = document.getElementById("map_biomes");
-  const canvasW = document.getElementById("map_water");
-  const mapHeight = document.getElementById('map_height');
-
-  canvasB.addEventListener("mousemove", function (e) {
-    drawWithTool('move', e);
+function initEvents() {
+  viewsContainerDiv.addEventListener("mousemove", function (e) {
+    mouseEvent('move', e);
   }, false);
-  canvasB.addEventListener("mousedown", function (e) {
-    drawWithTool('down', e);
+  viewsContainerDiv.addEventListener("mousedown", function (e) {
+    mouseEvent('down', e);
   }, false);
-  canvasB.addEventListener("mouseup", function (e) {
-    drawWithTool('up', e);
+  viewsContainerDiv.addEventListener("mouseup", function (e) {
+    mouseEvent('up', e);
   }, false);
-  canvasB.addEventListener("mouseout", function (e) {
-    drawWithTool('out', e);
+  viewsContainerDiv.addEventListener("mouseout", function (e) {
+    mouseEvent('out', e);
   }, false);
 
-  canvasW.addEventListener("mousemove", function (e) {
-    drawWithTool('move', e);
-  }, false);
-  canvasW.addEventListener("mousedown", function (e) {
-    drawWithTool('down', e);
-  }, false);
-  canvasW.addEventListener("mouseup", function (e) {
-    drawWithTool('up', e);
-  }, false);
-  canvasW.addEventListener("mouseout", function (e) {
-    drawWithTool('out', e);
+  viewsContainerDiv.addEventListener("wheel", function (event) {
+
   }, false);
 
-  mapHeight.addEventListener("mousemove", function (e) {
-    drawWith3dTool('move', e);
-  }, false);
-  mapHeight.addEventListener("mousedown", function (e) {
-    drawWith3dTool('down', e);
-  }, false);
-  mapHeight.addEventListener("mouseup", function (e) {
-    drawWith3dTool('up', e);
-  }, false);
-  mapHeight.addEventListener("mouseout", function (e) {
-    drawWith3dTool('out', e);
-  }, false);
+  showLayerBiomesButton.addEventListener("click", function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showLayer('biomes');
+  });
 
-  window.addEventListener( 'pointermove', onPointerMove );
+  showLayerWaterButton.addEventListener("click", function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showLayer('water');
+  });
+
+  showLayerTemperatureButton.addEventListener("click", function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showLayer('temperature');
+  });
+
+  showLayerRainfallButton.addEventListener("click", function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showLayer('rainfall');
+  });
+
+  showLayerHeightButton.addEventListener("click", function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showLayer('height');
+  });
+
+  window.addEventListener('pointermove', onPointerMove);
 
   let inputHeightmap = document.getElementById('inputHeightmap');
   inputHeightmap.addEventListener('change', importHeight);
@@ -52,4 +56,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let inputBiome = document.getElementById('inputBiome');
   inputBiome.addEventListener('change', importBiome);
-});
+
+  let inputMap = document.getElementById('inputMap');
+  inputMap.addEventListener('change', importExistingMap);
+}
+
+function mouseEvent(...args) {
+  if (state.activeDimension === '2d') {
+    drawWithTool(...args);
+  } else {
+    drawWith3dTool(...args);
+  }
+}

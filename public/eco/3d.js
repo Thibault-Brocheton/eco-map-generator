@@ -1,3 +1,6 @@
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
 function heightMapTo3d() {
   if (!instanceMesh) {
     alert('Initialize 3D View first');
@@ -9,7 +12,7 @@ function heightMapTo3d() {
 
   for (let i = 0; i < size * size; i++) {
     instanceMesh.getMatrixAt(i, matrix);
-    const greyValue = myImageData.data[i * 4 + 3];
+    const greyValue = myImageData.data[i * 4];
 
     handleHeightSet(matrix, greyValue * maxHeight / 255)
 
@@ -26,7 +29,7 @@ function init3dView() {
 
     stats.domElement.style.position = 'absolute';
     stats.domElement.style.left = '0';
-    stats.domElement.style.top = '0';
+    stats.domElement.style.bottom = '0';
 
     return stats;
   }
@@ -40,7 +43,7 @@ function init3dView() {
 
   renderer = new THREE.WebGLRenderer({ antialias : false });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize( size, size );
+  renderer.setSize( window.state.size, window.state.size );
 
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.zoomSpeed = 1;
@@ -70,8 +73,8 @@ function init3dView() {
 
   animate();
 
-  mapHeight.appendChild( renderer.domElement );
-  mapHeight.appendChild( stats.domElement );
+  container3d.appendChild( renderer.domElement );
+  container3d.appendChild( stats.domElement );
 }
 
 function drawWith3dTool(res, e) {
@@ -159,10 +162,10 @@ function handleHeightAddition(matrix, elevation) {
 }
 
 function generateHeightmapBasic() {
-  const myImageData = ctxB.getImageData(0, 0, size, size);
+  const myImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
   const matrix = new THREE.Matrix4();
 
-  for (let i = 0; i < size * size; i++) {
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
     instanceMesh.getMatrixAt(i, matrix);
 
     const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
@@ -193,12 +196,12 @@ function generateHeightmapPerlin() {
 
   noise.seed(seed);
 
-  const myImageData = ctxB.getImageData(0, 0, size, size);
+  const myImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
   const matrix = new THREE.Matrix4();
 
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      const id = j + i * size;
+  for (let i = 0; i < window.state.size; i++) {
+    for (let j = 0; j < window.state.size; j++) {
+      const id = j + i * window.state.size;
 
       const p = noise.perlin2(i / spreadX, j / spready);
 
@@ -229,11 +232,11 @@ function generateHeightmapPerlin() {
 
 function printWater() {
   const waterPower = parseInt(document.getElementById('water-power').value) / 10;
-  const myImageData = ctxW.getImageData(0, 0, size, size);
+  const myImageData = ctxW.getImageData(0, 0, window.state.size, window.state.size);
   const matrix = new THREE.Matrix4();
   const depthArray = getAllWaterDepth(myImageData);
 
-  for (let i = 0; i < size * size; i++) {
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
     instanceMesh.getMatrixAt(i, matrix);
 
     if (depthArray[i] > 0 && matrix.elements[5] > waterHeight - 5) {
@@ -275,18 +278,18 @@ function simpleMinimumDistanceToLand(myImageData, i) {
     distances.push(distance);
   }
 
-  return distances.reduce((acc, cur) => acc < cur ? acc : cur, size);
+  return distances.reduce((acc, cur) => acc < cur ? acc : cur, window.state.size);
 }
 
 function getAllWaterDepth(myImageData) {
   const waterDepth = [];
   const waterNeighbours = new Set();
 
-  for (let i = 0; i < size * size; i++) {
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
     if (myImageData.data[i * 4 + 3] === 0) {
       waterDepth.push(0);
     } else {
-      waterDepth.push(size);
+      waterDepth.push(window.state.size);
 
       if (getNeighboursAtDistance(i, 1).map(n => myImageData.data[n * 4 + 3]).some(n => n === 0)) {
         waterNeighbours.add(i);
@@ -305,7 +308,7 @@ function getAllWaterDepth(myImageData) {
     waterDepth[currentId] = Math.min(...(neighbours.map(n => waterDepth[n]))) + 1;
 
     for (const neighbourId of neighbours) {
-      if (waterDepth[neighbourId] === size) {
+      if (waterDepth[neighbourId] === window.state.size) {
         waterNeighbours.add(neighbourId)
       }
     }
@@ -331,7 +334,7 @@ function getNeighboursAtDistance(id, width, includeCenter = true) {
   const neighbours = [];
 
   for (let x = - width; x <= width; x++) {
-    for (let y = - width * size; y <= width * size; y += size) {
+    for (let y = - width * window.state.size; y <= width * window.state.size; y += window.state.size) {
       let localId = id + x + y;
 
       if (!includeCenter && x === 0 && y === 0) {
@@ -339,27 +342,27 @@ function getNeighboursAtDistance(id, width, includeCenter = true) {
       }
 
       if (localId < 0) {
-        localId += size * size;
+        localId += window.state.size * window.state.size;
       }
 
-      if (localId >= size * size) {
-        localId -= size * size
+      if (localId >= window.state.size * window.state.size) {
+        localId -= window.state.size * window.state.size
       }
 
-      if (localId % size > id % size && x < 0) {
-        localId += size;
+      if (localId % window.state.size > id % window.state.size && x < 0) {
+        localId += window.state.size;
       }
 
-      if (localId % size < id % size && x > 0) {
-        localId -= size;
+      if (localId % window.state.size < id % window.state.size && x > 0) {
+        localId -= window.state.size;
       }
 
       if (localId < 0) {
-        localId += size * size;
+        localId += window.state.size * window.state.size;
       }
 
-      if (localId >= size * size) {
-        localId -= size * size
+      if (localId >= window.state.size * window.state.size) {
+        localId -= window.state.size * window.state.size
       }
 
       neighbours.push(localId);
@@ -382,7 +385,7 @@ function smoothHeightMap() {
     width = 1;
   }
 
-  const myImageData = ctxB.getImageData(0, 0, size, size);
+  const myImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
   const neighbours = [];
 
   for (let k = 0; k < Math.pow(1 + width * 2, 2); k++) {
@@ -393,7 +396,7 @@ function smoothHeightMap() {
   for (let k = 0; k < loop; k++) {
     const newHeight = [];
 
-    for (let i = 0; i < size * size; i++) {
+    for (let i = 0; i < window.state.size * window.state.size; i++) {
       const neighboursId = getNeighboursAtDistance(i, width);
 
       for (let j = 0; j < neighboursId.length; j++) {
@@ -405,7 +408,7 @@ function smoothHeightMap() {
       newHeight.push(averageHeight);
     }
 
-    for (let i = 0; i < size * size; i++) {
+    for (let i = 0; i < window.state.size * window.state.size; i++) {
       instanceMesh.getMatrixAt(i, matrix);
 
       const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
@@ -433,35 +436,31 @@ function smoothHeightMap() {
 }
 
 function update3dView() {
-  renderer.setSize( size, size );
+  renderer.setSize( window.state.size, window.state.size );
 }
 
 function onPointerMove(event) {
   // calculate pointer position in normalized device coordinates
   // (-1 to +1) for both components
-  const box = mapHeight.getBoundingClientRect();
+  const box = container3d.getBoundingClientRect();
 
-  pointer.x = ((event.clientX - box.left) / size) * 2 - 1;
-  pointer.y = -((event.clientY - box.top) / size) * 2 + 1;
+  pointer.x = ((event.clientX - box.left) / window.state.size) * 2 - 1;
+  pointer.y = -((event.clientY - box.top) / window.state.size) * 2 + 1;
 
 }
 function refresh3dContent() {
-  const axesHelper = new THREE.AxesHelper( 5 );
-  axesHelper.setColors('red', 'green', 'blue')
-  scene.add( axesHelper );
-
   if (instanceMesh) {
     scene.remove(instanceMesh);
   }
 
-  const biomeImageData = ctxB.getImageData(0, 0, size, size);
-  const biomeWaterData = ctxW.getImageData(0, 0, size, size);
+  const biomeImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
+  const biomeWaterData = waterContext.getImageData(0, 0, window.state.size, window.state.size);
 
   const workArray = [];
   let x = 0;
 
   for (let i = 0; i < biomeImageData.data.length / 4; i++) {
-    if (i % size === 0) {
+    if (i % window.state.size === 0) {
       x = 0;
     }
 
@@ -481,24 +480,22 @@ function refresh3dContent() {
     x++;
   }
 
-  let localSize = size;
-
   const material = new THREE.MeshBasicMaterial();
   const matrix = new THREE.Matrix4();
   const threeColor = new THREE.Color();
 
   const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
-  instanceMesh = new THREE.InstancedMesh( geometryBox, material, localSize * localSize );
+  instanceMesh = new THREE.InstancedMesh( geometryBox, material, window.state.size * window.state.size );
   instanceMesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
   instanceMesh.castShadow = true;
   instanceMesh.receiveShadow = true;
   scene.add( instanceMesh );
 
-  for (let j = 0; j < localSize; j++) {
-    for (let i = 0; i < localSize; i++) {
+  for (let j = 0; j < window.state.size; j++) {
+    for (let i = 0; i < window.state.size; i++) {
       matrix.setPosition(i, 0.5, j);
-      instanceMesh.setMatrixAt(i + j * localSize, matrix );
-      instanceXZ[`${i}:${j}`] = i + j * localSize;
+      instanceMesh.setMatrixAt(i + j * window.state.size, matrix );
+      instanceXZ[`${i}:${j}`] = i + j * window.state.size;
       let color = workArray[i][j];
       let randomTaint = Math.random() - 0.5;
       if (randomTaint < -0.2 || randomTaint > 0.2) randomTaint = 0;
@@ -506,21 +503,24 @@ function refresh3dContent() {
 
       const colorHex = Number('0x' + color.substring(1, color.length));
 
-      instanceMesh.setColorAt(i + j * localSize, threeColor.setHex(colorHex));
+      instanceMesh.setColorAt(i + j * window.state.size, threeColor.setHex(colorHex));
     }
   }
 
-  camera.position.set(localSize/2, 200, localSize);
-  controls.target = new THREE.Vector3(localSize / 2, 100, localSize / 2);
+  camera.position.set(window.state.size/2, 200, window.state.size);
+  controls.target = new THREE.Vector3(window.state.size / 2, 100, window.state.size / 2);
 }
+
 function changeElevationWidth() {
   elevationWidth = parseInt(document.getElementById("elevationWidth").value);
   console.log("elevation width is now", elevationWidth);
 }
+
 function changeElevationHeight() {
   elevationHeight = parseInt(document.getElementById("elevationHeight").value);
   console.log("elevation height is now", elevationHeight);
 }
+
 function toolMove() {
   tool3d = 'move';
   document.getElementById('elevationWidth').style.display = 'none';
@@ -529,6 +529,7 @@ function toolMove() {
 
   console.log('3d tool is now', tool3d)
 }
+
 function toolElevation() {
   tool3d = 'elevation';
   document.getElementById('elevationWidth').style.display = 'block';
@@ -537,6 +538,7 @@ function toolElevation() {
 
   console.log('3d tool is now', tool3d)
 }
+
 function toolColor() {
   tool3d = 'color';
   document.getElementById('elevationWidth').style.display = 'none';
@@ -547,10 +549,10 @@ function toolColor() {
 }
 
 function forceCoastHeight() {
-  const myImageData = ctxB.getImageData(0, 0, size, size);
+  const myImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
   const matrix = new THREE.Matrix4();
 
-  for (let i = 0; i < size * size; i++) {
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
     instanceMesh.getMatrixAt(i, matrix);
 
     const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
@@ -563,4 +565,26 @@ function forceCoastHeight() {
   }
 
   instanceMesh.instanceMatrix.needsUpdate = true;
+}
+
+function togglePlaneWater() {
+  if (planeWater) {
+    scene.remove(planeWater);
+    planeWater = undefined;
+  } else {
+    const geoWater = new THREE.PlaneGeometry(size, size);
+    const matWater = new THREE.MeshBasicMaterial({
+      color: 0x99FFFF,
+      side: THREE.DoubleSide,
+      opacity: 0.5,
+      transparent: true
+    });
+    planeWater = new THREE.Mesh(geoWater, matWater);
+    planeWater.position.x = size / 2;
+    planeWater.position.y = waterHeight;
+    planeWater.position.z = size / 2;
+    planeWater.rotateX(-Math.PI / 2);
+
+    scene.add(planeWater);
+  }
 }
