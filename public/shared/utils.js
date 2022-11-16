@@ -66,3 +66,28 @@ function logEvery(nb) {
     logEveryCpt++;
   };
 }
+
+function removeBlack(ctx, size) {
+  const imageData = ctx.getImageData(0, 0, size, size);
+
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    if (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2] === 0) {
+      imageData.data[i + 3] = 0;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function handleHeightSet(matrix, height) {
+  if (height > maxHeight) {
+    matrix.elements[5] = maxHeight;
+    matrix.elements[13] = maxHeight / 2;
+  } else if (height < 1) {
+    matrix.elements[5] = 1;
+    matrix.elements[13] = 0.5;
+  } else {
+    matrix.elements[5] = height;
+    matrix.elements[13] = matrix.elements[5] / 2;
+  }
+}

@@ -144,19 +144,6 @@ function drawWith3dTool(res, e) {
   }
 }
 
-function handleHeightSet(matrix, height) {
-  if (height > maxHeight) {
-    matrix.elements[5] = maxHeight;
-    matrix.elements[13] = maxHeight / 2;
-  } else if (height < 1) {
-    matrix.elements[5] = 1;
-    matrix.elements[13] = 0.5;
-  } else {
-    matrix.elements[5] = height;
-    matrix.elements[13] = matrix.elements[5] / 2;
-  }
-}
-
 function handleHeightAddition(matrix, elevation) {
   handleHeightSet(matrix, matrix.elements[5] + elevation);
 }
@@ -435,10 +422,6 @@ function smoothHeightMap() {
   instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
-function update3dView() {
-  renderer.setSize( window.state.size, window.state.size );
-}
-
 function onPointerMove(event) {
   // calculate pointer position in normalized device coordinates
   // (-1 to +1) for both components
@@ -446,8 +429,8 @@ function onPointerMove(event) {
 
   pointer.x = ((event.clientX - box.left) / window.state.size) * 2 - 1;
   pointer.y = -((event.clientY - box.top) / window.state.size) * 2 + 1;
-
 }
+
 function refresh3dContent() {
   if (instanceMesh) {
     scene.remove(instanceMesh);

@@ -36,21 +36,12 @@
       </div>
       <div class="load-map">
         MAP Load<br />
-        <button><label for="inputMap">Import Existing Map</label></button><input multiple style="display: none;" type="file" id="inputMap" accept = "image/png"><br />
-        DEPRECATED: <button><label for="inputBiome">Import Biome</label></button><input style="display: none;" type="file" id="inputBiome" accept = "image/png"> -
-        <button><label for="inputWater">Import Water</label></button><input style="display: none;" type="file" id="inputWater" accept = "image/png"> -
-        <button><label for="inputHeightmap">Import Heightmap</label></button><input style="display: none;" type="file" id="inputHeightmap" accept = "image/png"><br />
+        <button><label for="inputMap">Import Existing Map</label></button><input multiple style="display: none;" type="file" id="inputMap" accept = "image/png">
       </div>
     </div>
     <div class="close-map" id="close-map" style="display: none;">
       <div class="export">
-        <button onclick="exportAll()">Export All</button><br />
-        <button onclick="exportBiome()">Export Biome</button>
-        <button onclick="exportWater()">Export Water</button>
-        <button onclick="exportWaterLevel()">Export Water Level</button>
-        <button onclick="exportHeight()">Export Height</button>
-        <button onclick="exportTemperature()">Export Temperature</button>
-        <button onclick="exportMoisture()">Export Moisture</button>
+        <button onclick="exportAll()">Export Map</button><br />
       </div>
       <div class="stop">
         <button onclick="exitMapEdition()">Cancel</button><br />
@@ -76,6 +67,9 @@
               <button class="blackwhite" id="show-layer-height">
                 <img class="full-size" src="/assets/height.svg" />
               </button>
+              <button class="blackwhite" id="show-layer-waterlevel">
+                <img class="full-size" src="/assets/waterlevel.svg" />
+              </button>
             </div>
             <div class="switch-view">
               <button class="blackwhite" onclick="switchView()">
@@ -90,6 +84,7 @@
               <canvas id="temperature-layer" class="layer"></canvas>
               <canvas id="rainfall-layer" class="layer"></canvas>
               <canvas id="height-layer" class="layer"></canvas>
+              <canvas id="waterlevel-layer" class="layer"></canvas>
             </div>
             <div class="view-3d">
               <div id="container-3d" class="container-3d"></div>

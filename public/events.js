@@ -46,16 +46,13 @@ function initEvents() {
     showLayer('height');
   });
 
+  showLayerWaterlevelButton.addEventListener("click", function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showLayer('waterlevel');
+  });
+
   window.addEventListener('pointermove', onPointerMove);
-
-  let inputHeightmap = document.getElementById('inputHeightmap');
-  inputHeightmap.addEventListener('change', importHeight);
-
-  let inputWater = document.getElementById('inputWater');
-  inputWater.addEventListener('change', importWater);
-
-  let inputBiome = document.getElementById('inputBiome');
-  inputBiome.addEventListener('change', importBiome);
 
   let inputMap = document.getElementById('inputMap');
   inputMap.addEventListener('change', importExistingMap);

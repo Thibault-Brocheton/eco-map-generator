@@ -29,14 +29,14 @@ function importExistingMap(eventChange) {
 }
 
 function loadMap(images) {
-  const biome = images.find(i => i.id.toLowerCase().startsWith('biomes.'));
+  const biomes = images.find(i => i.id.toLowerCase().startsWith('biomes.'));
 
-  if (!biome) {
+  if (!biomes) {
     return alert('You need to select at least one image named "Biomes".');
   }
 
-  const width = biome.width;
-  const height = biome.height;
+  const width = biomes.width;
+  const height = biomes.height;
 
   if (width !== height || images.filter(i => i.width === width && i.height === height).length !== images.length) {
     return alert('All files should have the same size, and be square (width = height).');
@@ -44,50 +44,62 @@ function loadMap(images) {
 
   window.state.size = width;
 
-  biomeCanvas.width = width;
-  biomeCanvas.height = height;
-  biomeContext.drawImage(biome, 0, 0);
+  biomeCanvas.width = window.state.size;
+  biomeCanvas.height = window.state.size;
+  biomeContext.drawImage(biomes, 0, 0);
 
   const water = images.find(i => i.id.toLowerCase().startsWith('water.'));
 
   if (water) {
-    waterCanvas.width = width;
-    waterCanvas.height = height;
+    waterCanvas.width = window.state.size;
+    waterCanvas.height = window.state.size;
     waterContext.drawImage(water, 0, 0);
   }
 
   const temperature = images.find(i => i.id.toLowerCase().startsWith('temperature.'));
 
   if (temperature) {
-    temperatureCanvas.width = width;
-    temperatureCanvas.height = height;
+    temperatureCanvas.width = window.state.size;
+    temperatureCanvas.height = window.state.size;
     temperatureContext.drawImage(temperature, 0, 0);
   }
 
   const rainfall = images.find(i => i.id.toLowerCase().startsWith('rainfall.'));
 
   if (rainfall) {
-    rainfallCanvas.width = width;
-    rainfallCanvas.height = height;
+    rainfallCanvas.width = window.state.size;
+    rainfallCanvas.height = window.state.size;
     rainfallContext.drawImage(rainfall, 0, 0);
   }
 
   const heightImage = images.find(i => i.id.toLowerCase().startsWith('height.'));
 
   if (heightImage) {
-    heightCanvas.width = width;
-    heightCanvas.height = height;
+    heightCanvas.width = window.state.size;
+    heightCanvas.height = window.state.size;
     heightContext.drawImage(heightImage, 0, 0);
   }
 
   const waterLevel = images.find(i => i.id.toLowerCase().includes('waterlevel.'));
 
   if (waterLevel) {
-    heightContext
-    heightContext.drawImage(waterLevel, 0, 0); // Draws the image on top of height
+    waterlevelCanvas.width = window.state.size;
+    waterlevelCanvas.height = window.state.size;
+    waterlevelContext.drawImage(waterLevel, 0, 0);
+
+    removeBlack(waterlevelContext, window.state.size);
   }
 
   enterMapEdition();
+}
+
+function exportAll() {
+  exportBiome();
+  exportWater();
+  exportHeight();
+  exportWaterLevel();
+  exportTemperature();
+  exportRainfall();
 }
 
 function exportBiome() {
@@ -100,13 +112,45 @@ function exportBiome() {
 
 function exportWater() {
   var link = document.createElement('a');
-  link.download = 'Water-import.png';
+  link.download = 'Water.png';
   link.href = waterCanvas.toDataURL();
   link.click();
   link.remove();
 }
 
 function exportWaterLevel() {
+  var link = document.createElement('a');
+  link.download = 'WaterLevel-import.png';
+  link.href = waterlevelCanvas.toDataURL();
+  link.click();
+  link.remove();
+}
+
+function exportHeight() {
+  var link = document.createElement('a');
+  link.download = 'Height-import.png';
+  link.href = heightCanvas.toDataURL();
+  link.click();
+  link.remove();
+}
+
+function exportTemperature() {
+  var link = document.createElement('a');
+  link.download = 'Temperature-import.png';
+  link.href = temperatureCanvas.toDataURL();
+  link.click();
+  link.remove();
+}
+
+function exportRainfall() {
+  var link = document.createElement('a');
+  link.download = 'Rainfall-import.png';
+  link.href = rainfallCanvas.toDataURL();
+  link.click();
+  link.remove();
+}
+
+/*function exportWaterLevel() {
   var link = document.createElement('a');
   link.download = 'WaterLevel-import.png';
 
@@ -127,8 +171,9 @@ function exportWaterLevel() {
   link.href = canvasHidden.toDataURL();
   link.click();
   link.remove();
-}
+}*/
 
+/*
 function exportHeight() {
   var link = document.createElement('a');
   link.download = 'Height-import.png';
@@ -158,9 +203,9 @@ function exportHeight() {
   link.href = canvasHidden.toDataURL();
   link.click();
   link.remove();
-}
+}*/
 
-function exportTemperature() {
+/*function exportTemperature() {
   var link = document.createElement('a');
   link.download = 'Temperature-import.png';
 
@@ -219,67 +264,4 @@ function exportMoisture() {
   link.href = canvasHidden.toDataURL();
   link.click();
   link.remove();
-}
-
-function exportAll() {
-  exportBiome();
-  exportWater();
-  exportHeight();
-}
-
-
-
-function importBiome(e) {
-  if(e.target.files) {
-    let imageFile = e.target.files[0]; //here we get the image file
-    var reader = new FileReader();
-    reader.readAsDataURL(imageFile);
-    reader.onloadend = function (e) {
-      var myImage = new Image(); // Creates image object
-      myImage.src = e.target.result; // Assigns converted image to image object
-      myImage.onload = function(ev) {
-        reset();
-
-        canvasB.width = myImage.width; // Assigns image's width to canvas
-        canvasB.height = myImage.height; // Assigns image's height to canvas
-        ctxB.drawImage(myImage,0,0); // Draws the image on canvas
-      }
-    }
-  }
-}
-
-function importWater(e) {
-  if(e.target.files) {
-    let imageFile = e.target.files[0]; //here we get the image file
-    var reader = new FileReader();
-    reader.readAsDataURL(imageFile);
-    reader.onloadend = function (e) {
-      var myImage = new Image(); // Creates image object
-      myImage.src = e.target.result; // Assigns converted image to image object
-      myImage.onload = function(ev) {
-        canvasW.width = myImage.width; // Assigns image's width to canvas
-        canvasW.height = myImage.height; // Assigns image's height to canvas
-        ctxW.drawImage(myImage,0,0); // Draws the image on canvas
-      }
-    }
-  }
-}
-
-function importHeight(e) {
-  if(e.target.files) {
-    let imageFile = e.target.files[0]; //here we get the image file
-    var reader = new FileReader();
-    reader.readAsDataURL(imageFile);
-    reader.onloadend = function (e) {
-      var myImage = new Image(); // Creates image object
-      myImage.src = e.target.result; // Assigns converted image to image object
-      myImage.onload = function() {
-        canvasHidden.width = myImage.width; // Assigns image's width to canvas
-        canvasHidden.height = myImage.height; // Assigns image's height to canvas
-        ctxHidden.drawImage(myImage,0,0); // Draws the image on canvas
-
-        heightMapTo3d();
-      };
-    };
-  }
-}
+}*/

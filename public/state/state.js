@@ -25,18 +25,21 @@ let waterCanvas;
 let temperatureCanvas;
 let rainfallCanvas;
 let heightCanvas;
+let waterlevelCanvas;
 
 let biomeContext;
 let waterContext;
 let temperatureContext;
 let rainfallContext;
 let heightContext;
+let waterlevelContext;
 
 let showLayerBiomesButton;
 let showLayerWaterButton;
 let showLayerTemperatureButton;
 let showLayerRainfallButton;
 let showLayerHeightButton;
+let showLayerWaterlevelButton;
 
 let container3d;
 
@@ -62,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   temperatureCanvas = document.getElementById('temperature-layer');
   rainfallCanvas = document.getElementById('rainfall-layer');
   heightCanvas = document.getElementById('height-layer');
+  waterlevelCanvas = document.getElementById('waterlevel-layer');
 
   // Canvas Contexts
   biomeContext = biomeCanvas.getContext('2d', { willReadFrequently: true });
@@ -69,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   temperatureContext = temperatureCanvas.getContext('2d', { willReadFrequently: true });
   rainfallContext = rainfallCanvas.getContext('2d', { willReadFrequently: true });
   heightContext = heightCanvas.getContext('2d', { willReadFrequently: true });
+  waterlevelContext = waterlevelCanvas.getContext('2d', { willReadFrequently: true });
 
   // Buttons
   showLayerBiomesButton = document.getElementById('show-layer-biomes');
@@ -76,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showLayerTemperatureButton = document.getElementById('show-layer-temperature');
   showLayerRainfallButton = document.getElementById('show-layer-rainfall');
   showLayerHeightButton = document.getElementById('show-layer-height');
+  showLayerWaterlevelButton = document.getElementById('show-layer-waterlevel');
   switchViewImg = document.getElementById('switch-view-img');
 
   // 3D
@@ -110,6 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas: heightCanvas,
     context: heightContext,
     button: showLayerHeightButton,
+  };
+
+  layersAssoc.waterlevel = {
+    canvas: waterlevelCanvas,
+    context: waterlevelContext,
+    button: showLayerWaterlevelButton,
   };
 
 
@@ -189,26 +201,30 @@ function showLayer(layer) {
       layersAssoc[layerKey].canvas.style.display = 'block';
       layersAssoc[layerKey].button.classList.add('active');
     } else {
-      if (layerKey !== 'biomes') {
+      layersAssoc[layerKey].button.classList.remove('active');
+
+      if (layerKey === 'height' && layer === 'waterlevel') {
+        layersAssoc[layerKey].canvas.style.display = 'block';
+      } else if (layerKey !== 'biomes') {
         layersAssoc[layerKey].canvas.style.display = 'none';
       }
-
-      layersAssoc[layerKey].button.classList.remove('active');
     }
   }
 }
 
 function switchView() {
-  if (container3d.style.display === 'block') {
-    switchViewImg.src = "/assets/3d.svg";
-    toolbar2dDiv.style.display = "block";
-    toolbar3dDiv.style.display = "none";
+  if (window.state.activeDimension === '3d') {
+    switchViewImg.src = '/assets/3d.svg';
+    toolbar2dDiv.style.display = 'block';
+    toolbar3dDiv.style.display = 'none';
     container3d.style.display = 'none';
+    window.state.activeDimension = '2d';
   } else {
-    switchViewImg.src = "/assets/2d.svg";
-    toolbar2dDiv.style.display = "none";
-    toolbar3dDiv.style.display = "block";
+    switchViewImg.src = '/assets/2d.svg';
+    toolbar2dDiv.style.display = 'none';
+    toolbar3dDiv.style.display = 'block';
     container3d.style.display = 'block';
+    window.state.activeDimension = '3d';
     refresh3dContent();
   }
 }
