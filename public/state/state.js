@@ -7,9 +7,15 @@ const initialState = {
   tool2d: 'pen',
   tool3d: 'move',
   isPointerDown: false,
+  scene: null,
+  camera: null,
+  renderer: null,
+  controls: null,
+  stats: null,
+  instanceMesh: null,
+  instanceXZ: null,
+  planeWater: null,
 }
-
-resetState();
 
 let sizeInput;
 
@@ -48,6 +54,8 @@ let switchViewImg;
 const layersAssoc = {};
 
 document.addEventListener('DOMContentLoaded', () => {
+  resetState();
+
   // Inputs
   sizeInput = document.getElementById('size');
 
@@ -185,6 +193,12 @@ function exitMapEdition() {
 
 function resetState() {
   window.state = {...initialState};
+
+  if (container3d && container3d.firstChild) {
+    while (container3d.firstChild) {
+      container3d.removeChild(container3d.lastChild);
+    }
+  }
 }
 
 function showLayer(layer) {

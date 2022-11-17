@@ -22,17 +22,17 @@ function toolFill() {
 
 function drawWithTool(res, e) {
   if (res === 'up' || res === 'out') {
-    isDrawing = false;
+    window.state.isPointerDown = false;
   }
 
-  if (tool === 'pen') {
+  if (window.state.tool2d === 'pen') {
     if (res === 'down') {
-      isDrawing = true;
+      window.state.isPointerDown = true;
 
       res = 'move';
     }
 
-    if (res === 'move' && isDrawing) {
+    if (res === 'move' && window.state.isPointerDown) {
       let box = window.state.activeCanvas.getBoundingClientRect();
 
       let x = e.clientX - Math.floor(box.left);
@@ -40,7 +40,7 @@ function drawWithTool(res, e) {
 
       drawAliasedCircle(x, y);
     }
-  } else if (tool === 'fill') {
+  } else if (window.state.tool2d === 'fill') {
     if (res === 'down') {
       const myImageData = window.state.activeContext.getImageData(0, 0, size, size);
 
@@ -55,7 +55,7 @@ function drawWithTool(res, e) {
       let x = 0;
 
       for (let i = 0; i < myImageData.data.length / 4; i++) {
-        if (i % size === 0) {
+        if (i % window.state.size === 0) {
           x = 0;
         }
 
@@ -85,9 +85,9 @@ function drawWithTool(res, e) {
         if (workArray[x][y] === firstColor) {
           workArray[x][y] = colorRgb;
 
-          myImageData.data[(x + y * size) * 4] = colorRgb.r;
-          myImageData.data[(x + y * size) * 4 + 1] = colorRgb.g;
-          myImageData.data[(x + y * size) * 4 + 2] = colorRgb.b;
+          myImageData.data[(x + y * window.state.size) * 4] = colorRgb.r;
+          myImageData.data[(x + y * window.state.size) * 4 + 1] = colorRgb.g;
+          myImageData.data[(x + y * window.state.size) * 4 + 2] = colorRgb.b;
 
           handleNeighbor(x    , y + 1, toBeVisited, workArray, firstColor);
           handleNeighbor(x + 1, y,     toBeVisited, workArray, firstColor);

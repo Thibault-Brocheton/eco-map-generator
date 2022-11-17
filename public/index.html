@@ -134,7 +134,14 @@
           <br />
           Loop: <input type="number" id="smooth-loop" value="1" style="width: 30px" /> - Width: <input type="number" id="smooth-width" value="1" style="width: 30px" /> - <button onclick="smoothHeightMap()">Smooth HeightMap</button><br />
           <button onclick="forceCoastHeight()">Force Coast height</button><br />
-          Water Power: <input type="number" id="water-power" value="10" /> - <button onclick="printWater()">Print Water</button><br />
+
+          <button onclick="refresh3dContent(true, true)">Show With All</button><br />
+          <button onclick="refresh3dContent(false, true)">Show Without Water Color</button><br />
+          <button onclick="refresh3dContent(true, false)">Show Without Water Elevation</button><br />
+          <button onclick="refresh3dContent(false, false)">Show Without Water</button><br />
+
+
+          <!--Water Power: <input type="number" id="water-power" value="10" /> - <button onclick="printWater()">Print Water</button><br />-->
         </div>
       </div>
     </div>

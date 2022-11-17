@@ -1,53 +1,27 @@
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
-function heightMapTo3d() {
-  if (!instanceMesh) {
-    alert('Initialize 3D View first');
-    return;
-  }
-
-  const myImageData = ctxHidden.getImageData(0, 0, size, size);
-  const matrix = new THREE.Matrix4();
-
-  for (let i = 0; i < size * size; i++) {
-    instanceMesh.getMatrixAt(i, matrix);
-    const greyValue = myImageData.data[i * 4];
-
-    handleHeightSet(matrix, greyValue * maxHeight / 255)
-
-    instanceMesh.setMatrixAt(i, matrix);
-  }
-
-  instanceMesh.instanceMatrix.needsUpdate = true;
-}
-
 function init3dView() {
-  function createStats() {
-    var stats = new Stats();
-    stats.setMode(0);
-
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0';
-    stats.domElement.style.bottom = '0';
-
-    return stats;
-  }
-
-  scene = new THREE.Scene();
+  const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x333333);
   scene.add(new THREE.HemisphereLight(0xffffcc, 0x19bbdc, 1));
 
-  camera = new THREE.PerspectiveCamera( 90, 1, 0.1, 10000 );
-  //camera = new THREE.OrthographicCamera();
+  const camera = new THREE.PerspectiveCamera(90, 1, 0.1, 10000);
 
-  renderer = new THREE.WebGLRenderer({ antialias : false });
+  const renderer = new THREE.WebGLRenderer({antialias: false});
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize( window.state.size, window.state.size );
+  renderer.setSize(window.state.size, window.state.size);
 
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.zoomSpeed = 1;
   controls.panSpeed = 1;
+
+  const stats = new Stats();
+  stats.setMode(0);
+
+  stats.domElement.style.position = 'absolute';
+  stats.domElement.style.left = '0';
+  stats.domElement.style.bottom = '0';
 
   const updateCameraOrbit = () => {
     const forward = new THREE.Vector3();
@@ -58,8 +32,6 @@ function init3dView() {
     updateCameraOrbit();
   });
 
-  stats = createStats();
-
   updateCameraOrbit();
 
   function animate() {
@@ -67,32 +39,67 @@ function init3dView() {
 
     controls.update();
 
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
     stats.update();
   }
 
   animate();
 
-  container3d.appendChild( renderer.domElement );
-  container3d.appendChild( stats.domElement );
+  const material = new THREE.MeshBasicMaterial();
+  const matrix = new THREE.Matrix4();
+  const threeColor = new THREE.Color();
+
+  const geometryBox = new THREE.BoxGeometry(1, 1, 1);
+  const instanceMesh = new THREE.InstancedMesh(geometryBox, material, window.state.size * window.state.size);
+
+  instanceMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // will be updated every frame
+  instanceMesh.castShadow = true;
+  instanceMesh.receiveShadow = true;
+  scene.add(instanceMesh);
+
+  const instanceXZ = {};
+
+  for (let j = 0; j < window.state.size; j++) {
+    for (let i = 0; i < window.state.size; i++) {
+      const id = i + j * window.state.size;
+      matrix.setPosition(i, 0.5, j);
+      instanceMesh.setMatrixAt(id, matrix);
+      instanceMesh.setColorAt(id, threeColor.setHex(Number('0x000000')));
+      instanceXZ[`${i}:${j}`] = id;
+    }
+  }
+
+  camera.position.set(window.state.size / 2, 200, window.state.size);
+  controls.target = new THREE.Vector3(window.state.size / 2, 100, window.state.size / 2);
+
+  window.state.scene = scene;
+  window.state.camera = camera;
+  window.state.renderer = renderer;
+  window.state.controls = controls;
+  window.state.stats = stats;
+  window.state.instanceMesh = instanceMesh;
+  window.state.instanceXZ = instanceXZ;
+
+  container3d.appendChild(renderer.domElement);
+  container3d.appendChild(stats.domElement);
 }
 
 function drawWith3dTool(res, e) {
   if (res === 'up' || res === 'out') {
-    is3dDrawing = false;
+    window.state.isPointerDown = false;
   }
 
   if (res === 'down') {
-    is3dDrawing = true;
+    window.state.isPointerDown = true;
 
     res = 'move';
   }
 
-  if (res === 'move' && is3dDrawing) {
-    if (tool3d === 'elevation') {
-      raycaster.setFromCamera( pointer, camera );
+  if (res === 'move' && window.state.isPointerDown) {
+    if (window.state.tool3d === 'elevation') {
+      raycaster.setFromCamera(pointer, window.state.camera);
 
-      const intersects = raycaster.intersectObjects( scene.children );
+      const intersects = raycaster.intersectObjects(window.state.scene.children);
 
       if (intersects.length) {
         console.log(intersects[0]);
@@ -123,14 +130,14 @@ function drawWith3dTool(res, e) {
 
         intersects[0].object.instanceMatrix.needsUpdate = true;
       }
-    } else if (tool3d === 'color') {
-      raycaster.setFromCamera( pointer, camera );
+    } else if (window.state.tool3d === 'color') {
+      raycaster.setFromCamera(pointer, window.state.camera);
 
-      const intersects = raycaster.intersectObjects( scene.children ).filter(a => a.faceIndex === 5 || a.faceIndex === 4);
+      const intersects = raycaster.intersectObjects(window.state.scene.children).filter(a => a.faceIndex === 5 || a.faceIndex === 4);
       const threeColor = new THREE.Color();
 
-      for (let i = 0; i < intersects.length; i ++) {
-        if (i=== 0) {
+      for (let i = 0; i < intersects.length; i++) {
+        if (i === 0) {
           console.log(intersects[i]);
         }
 
@@ -153,7 +160,7 @@ function generateHeightmapBasic() {
   const matrix = new THREE.Matrix4();
 
   for (let i = 0; i < window.state.size * window.state.size; i++) {
-    instanceMesh.getMatrixAt(i, matrix);
+    window.state.instanceMesh.getMatrixAt(i, matrix);
 
     const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
 
@@ -169,10 +176,10 @@ function generateHeightmapBasic() {
       handleHeightSet(matrix, waterHeight + coeff * waterHeight);
     }
 
-    instanceMesh.setMatrixAt(i, matrix);
+    window.state.instanceMesh.setMatrixAt(i, matrix);
   }
 
-  instanceMesh.instanceMatrix.needsUpdate = true;
+  window.state.instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
 function generateHeightmapPerlin() {
@@ -192,7 +199,7 @@ function generateHeightmapPerlin() {
 
       const p = noise.perlin2(i / spreadX, j / spready);
 
-      instanceMesh.getMatrixAt(id, matrix);
+      window.state.instanceMesh.getMatrixAt(id, matrix);
 
       const color = rgbToHex(myImageData.data[id * 4], myImageData.data[id * 4 + 1], myImageData.data[id * 4 + 2]);
       if (!biomeColorToName[color]) continue;
@@ -211,13 +218,14 @@ function generateHeightmapPerlin() {
 
       handleHeightSet(matrix, newElevation);
 
-      instanceMesh.setMatrixAt(id, matrix);
+      window.state.instanceMesh.setMatrixAt(id, matrix);
     }
   }
-  instanceMesh.instanceMatrix.needsUpdate = true;
+
+  window.state.instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
-function printWater() {
+/*function printWater() {
   const waterPower = parseInt(document.getElementById('water-power').value) / 10;
   const myImageData = ctxW.getImageData(0, 0, window.state.size, window.state.size);
   const matrix = new THREE.Matrix4();
@@ -234,18 +242,18 @@ function printWater() {
   }
 
   instanceMesh.instanceMatrix.needsUpdate = true;
-}
+}*/
 
 function simpleMinimumDistanceToLand(myImageData, i) {
   const pathes = [
     [-1, -1],
-    [ 0, -1],
-    [ 1, -1],
-    [-1,  0],
-    [ 1,  0],
-    [-1,  1],
-    [ 0,  1],
-    [ 1,  1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
   ];
 
   const distances = [];
@@ -258,9 +266,8 @@ function simpleMinimumDistanceToLand(myImageData, i) {
       distance++;
       currentId = i - path
       let color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
-
     }
-    while(color);
+    while (color);
 
     distances.push(distance);
   }
@@ -310,6 +317,10 @@ function getRealHeight(height) {
   return height >= 0 ? height * (maxHeight - waterHeight) + waterHeight : waterHeight + height * waterHeight;
 }
 
+function realHeightToElevation(height) {
+  return height >= waterHeight ? (height - waterHeight) / maxHeight : - (waterHeight - height) / waterHeight;
+}
+
 function getRealMinMax(height) {
   return {
     min: getRealHeight(height.min),
@@ -320,8 +331,8 @@ function getRealMinMax(height) {
 function getNeighboursAtDistance(id, width, includeCenter = true) {
   const neighbours = [];
 
-  for (let x = - width; x <= width; x++) {
-    for (let y = - width * window.state.size; y <= width * window.state.size; y += window.state.size) {
+  for (let x = -width; x <= width; x++) {
+    for (let y = -width * window.state.size; y <= width * window.state.size; y += window.state.size) {
       let localId = id + x + y;
 
       if (!includeCenter && x === 0 && y === 0) {
@@ -387,7 +398,7 @@ function smoothHeightMap() {
       const neighboursId = getNeighboursAtDistance(i, width);
 
       for (let j = 0; j < neighboursId.length; j++) {
-        instanceMesh.getMatrixAt(neighboursId[j], neighbours[j]);
+        window.state.instanceMesh.getMatrixAt(neighboursId[j], neighbours[j]);
       }
 
       const averageHeight = neighbours.map(m => m.elements[5]).reduce((acc, cur) => acc + cur) / neighbours.length;
@@ -396,7 +407,7 @@ function smoothHeightMap() {
     }
 
     for (let i = 0; i < window.state.size * window.state.size; i++) {
-      instanceMesh.getMatrixAt(i, matrix);
+      window.state.instanceMesh.getMatrixAt(i, matrix);
 
       const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
       if (!biomeColorToName[color]) continue;
@@ -415,11 +426,11 @@ function smoothHeightMap() {
 
       handleHeightSet(matrix, newElevation);
 
-      instanceMesh.setMatrixAt(i, matrix);
+      window.state.instanceMesh.setMatrixAt(i, matrix);
     }
   }
 
-  instanceMesh.instanceMatrix.needsUpdate = true;
+  window.state.instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
 function onPointerMove(event) {
@@ -431,67 +442,47 @@ function onPointerMove(event) {
   pointer.y = -((event.clientY - box.top) / window.state.size) * 2 + 1;
 }
 
-function refresh3dContent() {
-  if (instanceMesh) {
-    scene.remove(instanceMesh);
-  }
+function refresh3dContent(colorWater = true, useWaterHeight = true) {
+  const biomesData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
+  const waterData = waterContext.getImageData(0, 0, window.state.size, window.state.size);
+  const heightData = heightContext.getImageData(0, 0, window.state.size, window.state.size);
+  const waterlevelData = waterlevelContext.getImageData(0, 0, window.state.size, window.state.size);
 
-  const biomeImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
-  const biomeWaterData = waterContext.getImageData(0, 0, window.state.size, window.state.size);
-
-  const workArray = [];
-  let x = 0;
-
-  for (let i = 0; i < biomeImageData.data.length / 4; i++) {
-    if (i % window.state.size === 0) {
-      x = 0;
-    }
-
-    if (!workArray[x]) {
-      workArray[x] = [];
-    }
-
-    let color = rgbToHex(biomeImageData.data[i*4], biomeImageData.data[i*4 + 1], biomeImageData.data[i*4 + 2]);
-    let waterColor = rgbToHex(biomeWaterData.data[i*4], biomeWaterData.data[i*4 + 1], biomeWaterData.data[i*4 + 2]);
-
-    if (waterColor !== '#000000') {
-      color = waterColor;
-    }
-
-    workArray[x].push(color);
-
-    x++;
-  }
-
-  const material = new THREE.MeshBasicMaterial();
   const matrix = new THREE.Matrix4();
   const threeColor = new THREE.Color();
 
-  const geometryBox = new THREE.BoxGeometry( 1, 1, 1 );
-  instanceMesh = new THREE.InstancedMesh( geometryBox, material, window.state.size * window.state.size );
-  instanceMesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
-  instanceMesh.castShadow = true;
-  instanceMesh.receiveShadow = true;
-  scene.add( instanceMesh );
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
+    window.state.instanceMesh.getMatrixAt(i, matrix);
 
-  for (let j = 0; j < window.state.size; j++) {
-    for (let i = 0; i < window.state.size; i++) {
-      matrix.setPosition(i, 0.5, j);
-      instanceMesh.setMatrixAt(i + j * window.state.size, matrix );
-      instanceXZ[`${i}:${j}`] = i + j * window.state.size;
-      let color = workArray[i][j];
-      let randomTaint = Math.random() - 0.5;
-      if (randomTaint < -0.2 || randomTaint > 0.2) randomTaint = 0;
-      color = pSBc(randomTaint / 2, color);
+    let heightValue = heightData.data[i * 4];
+    const waterlevelValue = waterlevelData.data[i * 4];
 
-      const colorHex = Number('0x' + color.substring(1, color.length));
-
-      instanceMesh.setColorAt(i + j * window.state.size, threeColor.setHex(colorHex));
+    if (waterlevelValue > 0 && useWaterHeight) {
+      heightValue = waterlevelValue;
     }
+
+    handleHeightSet(matrix, getRealHeight(heightValue / 255 * 2 - 1));
+
+    window.state.instanceMesh.setMatrixAt(i, matrix);
+
+    let color = rgbToHex(biomesData.data[i * 4], biomesData.data[i * 4 + 1], biomesData.data[i * 4 + 2]);
+    const waterColor = rgbToHex(waterData.data[i * 4], waterData.data[i * 4 + 1], waterData.data[i * 4 + 2]);
+
+    if (waterColor !== '#000000' && colorWater) {
+      color = waterColor;
+    }
+
+    let randomTaint = Math.random() - 0.5;
+    if (randomTaint < -0.2 || randomTaint > 0.2) randomTaint = 0;
+    color = pSBc(randomTaint / 2, color);
+
+    const colorHex = Number('0x' + color.substring(1, color.length));
+
+    window.state.instanceMesh.setColorAt(i, threeColor.setHex(colorHex));
   }
 
-  camera.position.set(window.state.size/2, 200, window.state.size);
-  controls.target = new THREE.Vector3(window.state.size / 2, 100, window.state.size / 2);
+  window.state.instanceMesh.instanceMatrix.needsUpdate = true;
+  window.state.instanceMesh.instanceColor.needsUpdate = true;
 }
 
 function changeElevationWidth() {
@@ -505,28 +496,28 @@ function changeElevationHeight() {
 }
 
 function toolMove() {
-  tool3d = 'move';
+  window.state.tool3d = 'move';
   document.getElementById('elevationWidth').style.display = 'none';
   document.getElementById('elevationHeight').style.display = 'none';
-  controls.enabled = true;
+  window.state.controls.enabled = true;
 
-  console.log('3d tool is now', tool3d)
+  console.log('3d tool is now', window.state.tool3d)
 }
 
 function toolElevation() {
-  tool3d = 'elevation';
+  window.state.tool3d = 'elevation';
   document.getElementById('elevationWidth').style.display = 'block';
   document.getElementById('elevationHeight').style.display = 'block';
-  controls.enabled = false;
+  window.state.controls.enabled = false;
 
-  console.log('3d tool is now', tool3d)
+  console.log('3d tool is now', window.state.tool3d)
 }
 
 function toolColor() {
-  tool3d = 'color';
+  window.state.tool3d = 'color';
   document.getElementById('elevationWidth').style.display = 'none';
   document.getElementById('elevationHeight').style.display = 'none';
-  controls.enabled = false;
+  window.state.controls.enabled = false;
 
   console.log('3d tool is now', tool3d)
 }
@@ -536,7 +527,7 @@ function forceCoastHeight() {
   const matrix = new THREE.Matrix4();
 
   for (let i = 0; i < window.state.size * window.state.size; i++) {
-    instanceMesh.getMatrixAt(i, matrix);
+    window.state.instanceMesh.getMatrixAt(i, matrix);
 
     const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
 
@@ -544,30 +535,73 @@ function forceCoastHeight() {
 
     handleHeightSet(matrix, waterHeight);
 
-    instanceMesh.setMatrixAt(i, matrix);
+    window.state.instanceMesh.setMatrixAt(i, matrix);
   }
 
-  instanceMesh.instanceMatrix.needsUpdate = true;
+  window.state.instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
 function togglePlaneWater() {
-  if (planeWater) {
-    scene.remove(planeWater);
-    planeWater = undefined;
+  if (window.state.planeWater) {
+    window.state.scene.remove(window.state.planeWater);
+    window.state.planeWater = null;
   } else {
-    const geoWater = new THREE.PlaneGeometry(size, size);
+    const geoWater = new THREE.PlaneGeometry(window.state.size, window.state.size);
     const matWater = new THREE.MeshBasicMaterial({
-      color: 0x99FFFF,
+      color: 0x4682b4,
       side: THREE.DoubleSide,
-      opacity: 0.5,
+      opacity: 0.8,
       transparent: true
     });
-    planeWater = new THREE.Mesh(geoWater, matWater);
-    planeWater.position.x = size / 2;
+    const planeWater = new THREE.Mesh(geoWater, matWater);
+    planeWater.position.x = window.state.size / 2;
     planeWater.position.y = waterHeight;
-    planeWater.position.z = size / 2;
+    planeWater.position.z = window.state.size / 2;
     planeWater.rotateX(-Math.PI / 2);
 
-    scene.add(planeWater);
+    window.state.scene.add(planeWater);
+
+    window.state.planeWater = planeWater;
   }
+}
+
+/*
+const waterPower = parseInt(document.getElementById('water-power').value) / 10;
+  const myImageData = ctxW.getImageData(0, 0, window.state.size, window.state.size);
+  const matrix = new THREE.Matrix4();
+  const depthArray = getAllWaterDepth(myImageData);
+
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
+    instanceMesh.getMatrixAt(i, matrix);
+
+    if (depthArray[i] > 0 && matrix.elements[5] > waterHeight - 5) {
+      const value = matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower));
+      handleHeightSet(matrix, value);
+      instanceMesh.setMatrixAt(i, matrix);
+    }
+  }
+
+  instanceMesh.instanceMatrix.needsUpdate = true;
+ */
+
+function apply3dElevationToHeightAndElevation() {
+  const heightData = heightContext.getImageData(0, 0, window.state.size, window.state.size);
+  const waterlevelData = heightContext.getImageData(0, 0, window.state.size, window.state.size);
+  const matrix = new THREE.Matrix4();
+
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
+    window.state.instanceMesh.getMatrixAt(i, matrix);
+
+
+
+/*    if (waterlevelData[i * 4] > ) {
+
+    }*/
+
+    handleHeightSet(matrix, waterHeight);
+
+    window.state.instanceMesh.setMatrixAt(i, matrix);
+  }
+
+
 }
