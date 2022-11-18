@@ -37,10 +37,12 @@ function init3dView() {
   function animate() {
     requestAnimationFrame(animate);
 
-    controls.update();
+    if (window.state.activeDimension === '3d') {
+      controls.update();
 
-    renderer.render(scene, camera);
-    stats.update();
+      renderer.render(scene, camera);
+      stats.update();
+    }
   }
 
   animate();
@@ -115,7 +117,7 @@ function drawWith3dTool(res, e) {
         for (let i = -elevationWidth; i <= elevationWidth; i++) {
           for (let j = -elevationWidth; j <= elevationWidth; j++) {
             if (distance(centerX, centerZ, centerX + i, centerZ + j) < elevationWidth) {
-              let instanceId = instanceXZ[`${centerX + i}:${centerZ + j}`];
+              let instanceId = window.state.instanceXZ[`${centerX + i}:${centerZ + j}`];
 
               if (instanceId) {
                 intersects[0].object.getMatrixAt(instanceId, matrix);
@@ -225,24 +227,28 @@ function generateHeightmapPerlin() {
   window.state.instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
-/*function printWater() {
-  const waterPower = parseInt(document.getElementById('water-power').value) / 10;
-  const myImageData = ctxW.getImageData(0, 0, window.state.size, window.state.size);
-  const matrix = new THREE.Matrix4();
-  const depthArray = getAllWaterDepth(myImageData);
+function togglePrintWater() {
+  if (window.state.printWaterChanges) {
 
-  for (let i = 0; i < window.state.size * window.state.size; i++) {
-    instanceMesh.getMatrixAt(i, matrix);
+  } else {
+    const waterPower = parseInt(document.getElementById('water-power').value) / 10;
+    const myImageData = waterContext.getImageData(0, 0, window.state.size, window.state.size);
+    const matrix = new THREE.Matrix4();
+    const depthArray = getAllWaterDepth(myImageData);
 
-    if (depthArray[i] > 0 && matrix.elements[5] > waterHeight - 5) {
-      const value = matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower));
-      handleHeightSet(matrix, value);
-      instanceMesh.setMatrixAt(i, matrix);
+    for (let i = 0; i < window.state.size * window.state.size; i++) {
+      window.state.instanceMesh.getMatrixAt(i, matrix);
+
+      if (depthArray[i] > 0 && matrix.elements[5] > waterHeight - 5) {
+        const value = matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower));
+        handleHeightSet(matrix, value);
+        window.state.instanceMesh.setMatrixAt(i, matrix);
+      }
     }
-  }
 
-  instanceMesh.instanceMatrix.needsUpdate = true;
-}*/
+    window.state.instanceMesh.instanceMatrix.needsUpdate = true;
+  }
+}
 
 function simpleMinimumDistanceToLand(myImageData, i) {
   const pathes = [
@@ -313,18 +319,26 @@ function getAllWaterDepth(myImageData) {
   return waterDepth;
 }
 
-function getRealHeight(height) {
-  return height >= 0 ? height * (maxHeight - waterHeight) + waterHeight : waterHeight + height * waterHeight;
+function elevationToGrey(elevation) {
+  return (elevation + 1) / 2 * 255;
 }
 
-function realHeightToElevation(height) {
-  return height >= waterHeight ? (height - waterHeight) / maxHeight : - (waterHeight - height) / waterHeight;
+function greyToElevation(grey) {
+  return grey / 255 * 2 - 1;
+}
+
+function elevationToHeight(elevation) {
+  return elevation >= 0 ? elevation * (maxHeight - waterHeight) + waterHeight : waterHeight + elevation * waterHeight;
+}
+
+function heightToElevation(height) {
+  return height >= waterHeight ? (height - waterHeight) / (maxHeight - waterHeight) : - (waterHeight - height) / waterHeight;
 }
 
 function getRealMinMax(height) {
   return {
-    min: getRealHeight(height.min),
-    max: getRealHeight(height.max),
+    min: elevationToHeight(height.min),
+    max: elevationToHeight(height.max),
   }
 }
 
@@ -454,14 +468,14 @@ function refresh3dContent(colorWater = true, useWaterHeight = true) {
   for (let i = 0; i < window.state.size * window.state.size; i++) {
     window.state.instanceMesh.getMatrixAt(i, matrix);
 
-    let heightValue = heightData.data[i * 4];
+    let greyValue = heightData.data[i * 4];
     const waterlevelValue = waterlevelData.data[i * 4];
 
     if (waterlevelValue > 0 && useWaterHeight) {
-      heightValue = waterlevelValue;
+      greyValue = waterlevelValue;
     }
 
-    handleHeightSet(matrix, getRealHeight(heightValue / 255 * 2 - 1));
+    handleHeightSet(matrix, elevationToHeight(greyToElevation(greyValue));
 
     window.state.instanceMesh.setMatrixAt(i, matrix);
 
@@ -565,43 +579,48 @@ function togglePlaneWater() {
   }
 }
 
-/*
-const waterPower = parseInt(document.getElementById('water-power').value) / 10;
-  const myImageData = ctxW.getImageData(0, 0, window.state.size, window.state.size);
-  const matrix = new THREE.Matrix4();
-  const depthArray = getAllWaterDepth(myImageData);
+function apply3dElevationToCanvas() {
+  const waterPower = parseInt(document.getElementById('water-power').value) / 10;
 
-  for (let i = 0; i < window.state.size * window.state.size; i++) {
-    instanceMesh.getMatrixAt(i, matrix);
-
-    if (depthArray[i] > 0 && matrix.elements[5] > waterHeight - 5) {
-      const value = matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower));
-      handleHeightSet(matrix, value);
-      instanceMesh.setMatrixAt(i, matrix);
-    }
-  }
-
-  instanceMesh.instanceMatrix.needsUpdate = true;
- */
-
-function apply3dElevationToHeightAndElevation() {
   const heightData = heightContext.getImageData(0, 0, window.state.size, window.state.size);
-  const waterlevelData = heightContext.getImageData(0, 0, window.state.size, window.state.size);
+  const waterlevelData = waterlevelContext.getImageData(0, 0, window.state.size, window.state.size);
+
+  const waterData = waterContext.getImageData(0, 0, window.state.size, window.state.size);
+  const depthArray = getAllWaterDepth(waterData);
+
   const matrix = new THREE.Matrix4();
 
   for (let i = 0; i < window.state.size * window.state.size; i++) {
     window.state.instanceMesh.getMatrixAt(i, matrix);
 
+    const greyValue = elevationToGrey(heightToElevation(matrix.elements[5]));
 
+    if (depthArray[i] > 0) {
+      waterlevelData.data[i * 4]     = greyValue;
+      waterlevelData.data[i * 4 + 1] = greyValue;
+      waterlevelData.data[i * 4 + 2] = greyValue;
+      waterlevelData.data[i * 4 + 3] = 255;
 
-/*    if (waterlevelData[i * 4] > ) {
+      const greyHeightValue = elevationToGrey(heightToElevation(matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower))));
 
-    }*/
+      heightData.data[i * 4]     = greyHeightValue;
+      heightData.data[i * 4 + 1] = greyHeightValue;
+      heightData.data[i * 4 + 2] = greyHeightValue;
+      heightData.data[i * 4 + 3] = 255;
 
-    handleHeightSet(matrix, waterHeight);
+    } else {
+      waterlevelData.data[i * 4]     = 0;
+      waterlevelData.data[i * 4 + 1] = 0;
+      waterlevelData.data[i * 4 + 2] = 0;
+      waterlevelData.data[i * 4 + 3] = 0;
 
-    window.state.instanceMesh.setMatrixAt(i, matrix);
+      heightData.data[i * 4]     = greyValue;
+      heightData.data[i * 4 + 1] = greyValue;
+      heightData.data[i * 4 + 2] = greyValue;
+      heightData.data[i * 4 + 3] = 255;
+    }
   }
 
-
+  waterlevelContext.putImageData(waterlevelData, 0, 0);
+  heightContext.putImageData(heightData, 0, 0);
 }

@@ -119,11 +119,15 @@ function exportWater() {
 }
 
 function exportWaterLevel() {
+  addBlack(waterlevelContext, window.state.size);
+
   var link = document.createElement('a');
   link.download = 'WaterLevel-import.png';
   link.href = waterlevelCanvas.toDataURL();
   link.click();
   link.remove();
+
+  removeBlack(waterlevelContext, window.state.size);
 }
 
 function exportHeight() {

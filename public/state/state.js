@@ -15,6 +15,7 @@ const initialState = {
   instanceMesh: null,
   instanceXZ: null,
   planeWater: null,
+  printWaterChanges: null,
 }
 
 let sizeInput;

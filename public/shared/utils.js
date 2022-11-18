@@ -79,6 +79,18 @@ function removeBlack(ctx, size) {
   ctx.putImageData(imageData, 0, 0);
 }
 
+function addBlack(ctx, size) {
+  const imageData = ctx.getImageData(0, 0, size, size);
+
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    if (imageData.data[i + 3] === 0) {
+      imageData.data[i + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
 function handleHeightSet(matrix, height) {
   if (height > maxHeight) {
     matrix.elements[5] = maxHeight;

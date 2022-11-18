@@ -9,15 +9,15 @@ function changeBrushWidth() {
 }
 
 function toolPen() {
-  tool = 'pen';
+  window.state.tool2d = 'pen';
   document.getElementById('brushWidth').style.display = 'block';
-  console.log('tool is now', tool)
+  console.log('tool is now', window.state.tool2d)
 }
 
 function toolFill() {
-  tool = 'fill';
+  window.state.tool2d = 'fill';
   document.getElementById('brushWidth').style.display = 'none';
-  console.log('tool is now', tool)
+  console.log('tool is now', window.state.tool2d)
 }
 
 function drawWithTool(res, e) {
@@ -42,7 +42,7 @@ function drawWithTool(res, e) {
     }
   } else if (window.state.tool2d === 'fill') {
     if (res === 'down') {
-      const myImageData = window.state.activeContext.getImageData(0, 0, size, size);
+      const myImageData = window.state.activeContext.getImageData(0, 0, window.state.size, window.state.size);
 
       let box = window.state.activeCanvas.getBoundingClientRect();
 
@@ -63,7 +63,7 @@ function drawWithTool(res, e) {
           workArray[x] = [];
         }
 
-        workArray[x].push(rgbToHex(myImageData.data[i*4], myImageData.data[i*4 + 1], myImageData.data[i*4 + 2]));
+        workArray[x].push(rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]));
 
         x++;
       }
@@ -106,7 +106,9 @@ function drawWithTool(res, e) {
 function drawAliasedCircle(xc, yc) {
   window.state.activeContext.beginPath();
 
-  var x = width, y = 0, cd = 0;
+  let x = width;
+  let y = 0;
+  let cd = 0;
 
   // middle line
   window.state.activeContext.rect(xc - x, yc, width<<1, 1);
@@ -135,7 +137,7 @@ function drawAliasedCircle(xc, yc) {
 }
 
 function handleNeighbor(posX, posY, toBeVisited, workArray, firstColor) {
-  if (posY >= size || posY < 0 || posX >= size || posX < 0) {
+  if (posY >= window.state.size || posY < 0 || posX >= window.state.size || posX < 0) {
     return;
   }
 
