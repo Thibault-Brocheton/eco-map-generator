@@ -6,6 +6,10 @@ const initialState = {
   activeDimension: '2d',
   tool2d: 'pen',
   tool3d: 'move',
+  brushWidth: 10,
+  eraserWidth: 10,
+  blurPower: 300,
+  color: '#000000',
   isPointerDown: false,
   scene: null,
   camera: null,
@@ -16,6 +20,8 @@ const initialState = {
   instanceXZ: null,
   planeWater: null,
   printWaterChanges: null,
+  elevationHeight: 10,
+  elevationWidth: 10,
 }
 
 let sizeInput;
@@ -26,6 +32,14 @@ let contentDiv;
 let viewsContainerDiv;
 let toolbar2dDiv;
 let toolbar3dDiv;
+let toolsDiv;
+
+let colorsBiomesDiv;
+let colorsWaterDiv;
+let colorsTemperatureDiv;
+let colorsRainfallDiv;
+let colorsHeightDiv;
+let colorsWaterlevelDiv;
 
 let biomeCanvas;
 let waterCanvas;
@@ -65,8 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
   mapCreationDiv = document.getElementById('map-creation');
   contentDiv = document.getElementById('content');
   viewsContainerDiv = document.getElementById('views-container');
-  toolbar2dDiv = document.getElementById('toolbar2d');
-  toolbar3dDiv = document.getElementById('toolbar3d');
+  toolbar2dDiv = document.getElementById('toolbar-2d');
+  toolbar3dDiv = document.getElementById('toolbar-3d');
+  toolsDiv = document.getElementById('tools');
+
+  colorsBiomesDiv = document.getElementById('colors-biomes');
+  colorsWaterDiv = document.getElementById('colors-water');
+  colorsTemperatureDiv = document.getElementById('colors-temperature');
+  colorsRainfallDiv = document.getElementById('colors-rainfall');
+  colorsHeightDiv = document.getElementById('colors-height');
+  colorsWaterlevelDiv = document.getElementById('colors-waterlevel');
 
   // Canvas
   biomeCanvas = document.getElementById('biome-layer');
@@ -101,36 +123,42 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas: biomeCanvas,
     context: biomeContext,
     button: showLayerBiomesButton,
+    colorsDiv: colorsBiomesDiv,
   };
 
   layersAssoc.water = {
     canvas: waterCanvas,
     context: waterContext,
     button: showLayerWaterButton,
+    colorsDiv: colorsWaterDiv,
   };
 
   layersAssoc.temperature = {
     canvas: temperatureCanvas,
     context: temperatureContext,
     button: showLayerTemperatureButton,
+    colorsDiv: colorsTemperatureDiv,
   };
 
   layersAssoc.rainfall = {
     canvas: rainfallCanvas,
     context: rainfallContext,
     button: showLayerRainfallButton,
+    colorsDiv: colorsRainfallDiv,
   };
 
   layersAssoc.height = {
     canvas: heightCanvas,
     context: heightContext,
     button: showLayerHeightButton,
+    colorsDiv: colorsHeightDiv,
   };
 
   layersAssoc.waterlevel = {
     canvas: waterlevelCanvas,
     context: waterlevelContext,
     button: showLayerWaterlevelButton,
+    colorsDiv: colorsWaterlevelDiv,
   };
 
 
@@ -146,27 +174,34 @@ function createMap() {
 
   window.state.size = size * 10;
 
-  for (let canvas of [biomeCanvas, waterCanvas, temperatureCanvas, rainfallCanvas, heightCanvas]) {
-    canvas.width = window.state.size;
-    canvas.height = window.state.size;
+  initializeCanvas(window.state.size);
+
+  enterMapEdition();
+}
+
+function initializeCanvas(size) {
+  for (let canvas of [biomeCanvas, waterCanvas, temperatureCanvas, rainfallCanvas, heightCanvas, waterlevelCanvas]) {
+    canvas.width = size;
+    canvas.height = size;
   }
 
   biomeContext.fillStyle = biomesConfiguration["DeepOcean"].color;
-  biomeContext.fillRect(0, 0, window.state.size, window.state.size);
+  biomeContext.fillRect(0, 0, size, size);
 
   waterContext.fillStyle = 'rgba(0,0,0,0)';
-  waterContext.fillRect(0, 0, window.state.size, window.state.size);
+  waterContext.fillRect(0, 0, size, size);
 
   temperatureContext.fillStyle = 'rgb(0,0,0)';
-  temperatureContext.fillRect(0, 0, window.state.size, window.state.size);
+  temperatureContext.fillRect(0, 0, size, size);
 
   rainfallContext.fillStyle = 'rgb(0,0,0)';
-  rainfallContext.fillRect(0, 0, window.state.size, window.state.size);
+  rainfallContext.fillRect(0, 0, size, size);
 
   heightContext.fillStyle = 'rgb(0,0,0)';
-  heightContext.fillRect(0, 0, window.state.size, window.state.size);
+  heightContext.fillRect(0, 0, size, size);
 
-  enterMapEdition();
+  waterlevelContext.fillStyle = 'rgba(0,0,0,0)';
+  waterlevelContext.fillRect(0, 0, size, size);
 }
 
 function enterMapEdition() {
@@ -215,8 +250,10 @@ function showLayer(layer) {
     if (layerKey === layer) {
       layersAssoc[layerKey].canvas.style.display = 'block';
       layersAssoc[layerKey].button.classList.add('active');
+      layersAssoc[layerKey].colorsDiv.style.display = 'block';
     } else {
       layersAssoc[layerKey].button.classList.remove('active');
+      layersAssoc[layerKey].colorsDiv.style.display = 'none';
 
       if (layerKey === 'height' && layer === 'waterlevel') {
         layersAssoc[layerKey].canvas.style.display = 'block';
@@ -224,6 +261,14 @@ function showLayer(layer) {
         layersAssoc[layerKey].canvas.style.display = 'none';
       }
     }
+  }
+
+  for (const child of toolsDiv.children) {
+    if (!child.dataset || !child.dataset.tools) {
+      continue;
+    }
+
+    child.style.display = child.dataset.tools.includes(layer) ? 'block' : 'none';
   }
 }
 
@@ -234,6 +279,7 @@ function switchView() {
     toolbar3dDiv.style.display = 'none';
     container3d.style.display = 'none';
     window.state.activeDimension = '2d';
+    apply3dElevationToCanvas();
   } else {
     switchViewImg.src = '/assets/2d.svg';
     toolbar2dDiv.style.display = 'none';

@@ -29,7 +29,7 @@ function importExistingMap(eventChange) {
 }
 
 function loadMap(images) {
-  const biomes = images.find(i => i.id.toLowerCase().startsWith('biomes.'));
+  const biomes = images.find(i => i.id.toLowerCase().startsWith('biomes'));
 
   if (!biomes) {
     return alert('You need to select at least one image named "Biomes".');
@@ -44,47 +44,37 @@ function loadMap(images) {
 
   window.state.size = width;
 
-  biomeCanvas.width = window.state.size;
-  biomeCanvas.height = window.state.size;
+  initializeCanvas(window.state.size);
+
   biomeContext.drawImage(biomes, 0, 0);
 
   const water = images.find(i => i.id.toLowerCase().startsWith('water.'));
 
   if (water) {
-    waterCanvas.width = window.state.size;
-    waterCanvas.height = window.state.size;
     waterContext.drawImage(water, 0, 0);
   }
 
-  const temperature = images.find(i => i.id.toLowerCase().startsWith('temperature.'));
+  const temperature = images.find(i => i.id.toLowerCase().startsWith('temperature'));
 
   if (temperature) {
-    temperatureCanvas.width = window.state.size;
-    temperatureCanvas.height = window.state.size;
     temperatureContext.drawImage(temperature, 0, 0);
   }
 
-  const rainfall = images.find(i => i.id.toLowerCase().startsWith('rainfall.'));
+  const rainfall = images.find(i => i.id.toLowerCase().startsWith('rainfall'));
 
   if (rainfall) {
-    rainfallCanvas.width = window.state.size;
-    rainfallCanvas.height = window.state.size;
     rainfallContext.drawImage(rainfall, 0, 0);
   }
 
-  const heightImage = images.find(i => i.id.toLowerCase().startsWith('height.'));
+  const heightImage = images.find(i => i.id.toLowerCase().startsWith('height'));
 
   if (heightImage) {
-    heightCanvas.width = window.state.size;
-    heightCanvas.height = window.state.size;
     heightContext.drawImage(heightImage, 0, 0);
   }
 
-  const waterLevel = images.find(i => i.id.toLowerCase().includes('waterlevel.'));
+  const waterLevel = images.find(i => i.id.toLowerCase().includes('waterlevel'));
 
   if (waterLevel) {
-    waterlevelCanvas.width = window.state.size;
-    waterlevelCanvas.height = window.state.size;
     waterlevelContext.drawImage(waterLevel, 0, 0);
 
     removeBlack(waterlevelContext, window.state.size);
@@ -94,6 +84,10 @@ function loadMap(images) {
 }
 
 function exportAll() {
+  if (window.state.activeDimension === '3d') {
+    apply3dElevationToCanvas();
+  }
+
   exportBiome();
   exportWater();
   exportHeight();

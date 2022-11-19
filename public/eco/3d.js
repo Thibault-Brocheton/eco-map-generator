@@ -114,15 +114,15 @@ function drawWith3dTool(res, e) {
 
         const matrix = new THREE.Matrix4();
 
-        for (let i = -elevationWidth; i <= elevationWidth; i++) {
-          for (let j = -elevationWidth; j <= elevationWidth; j++) {
-            if (distance(centerX, centerZ, centerX + i, centerZ + j) < elevationWidth) {
+        for (let i = -window.state.elevationWidth; i <= window.state.elevationWidth; i++) {
+          for (let j = -window.state.elevationWidth; j <= window.state.elevationWidth; j++) {
+            if (distance(centerX, centerZ, centerX + i, centerZ + j) < window.state.elevationWidth) {
               let instanceId = window.state.instanceXZ[`${centerX + i}:${centerZ + j}`];
 
               if (instanceId) {
                 intersects[0].object.getMatrixAt(instanceId, matrix);
 
-                handleHeightAddition(matrix, elevationHeight);
+                handleHeightAddition(matrix, window.state.elevationHeight);
 
                 intersects[0].object.setMatrixAt(instanceId, matrix);
               }
@@ -475,7 +475,7 @@ function refresh3dContent(colorWater = true, useWaterHeight = true) {
       greyValue = waterlevelValue;
     }
 
-    handleHeightSet(matrix, elevationToHeight(greyToElevation(greyValue));
+    handleHeightSet(matrix, elevationToHeight(greyToElevation(greyValue)));
 
     window.state.instanceMesh.setMatrixAt(i, matrix);
 
@@ -500,13 +500,13 @@ function refresh3dContent(colorWater = true, useWaterHeight = true) {
 }
 
 function changeElevationWidth() {
-  elevationWidth = parseInt(document.getElementById("elevationWidth").value);
-  console.log("elevation width is now", elevationWidth);
+  window.state.elevationWidth = parseInt(document.getElementById("elevationWidth").value);
+  console.log("elevation width is now", window.state.elevationWidth);
 }
 
 function changeElevationHeight() {
-  elevationHeight = parseInt(document.getElementById("elevationHeight").value);
-  console.log("elevation height is now", elevationHeight);
+  window.state.elevationHeight = parseInt(document.getElementById("elevationHeight").value);
+  console.log("elevation height is now", window.state.elevationHeight);
 }
 
 function toolMove() {
@@ -533,7 +533,7 @@ function toolColor() {
   document.getElementById('elevationHeight').style.display = 'none';
   window.state.controls.enabled = false;
 
-  console.log('3d tool is now', tool3d)
+  console.log('3d tool is now', window.state.tool3d)
 }
 
 function forceCoastHeight() {
@@ -623,4 +623,12 @@ function apply3dElevationToCanvas() {
 
   waterlevelContext.putImageData(waterlevelData, 0, 0);
   heightContext.putImageData(heightData, 0, 0);
+}
+
+function smoothWater() {
+  const lakes = [];
+
+  for (let i = 0; i < window.state.size * window.state.size; i++) {
+
+  }
 }

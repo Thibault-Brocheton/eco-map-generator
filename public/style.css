@@ -78,14 +78,14 @@ canvas {
   position: absolute;
   z-index: 1000;
   top: 0;
-  right: -40px;
+  left: -40px;
 }
 
 .switch-layer {
   position: absolute;
   z-index: 1000;
   top: 0;
-  left: -40px;
+  right: -40px;
   display: flex;
   flex-flow: column nowrap;
 }
@@ -145,4 +145,25 @@ img.full-size {
 
 .maps-container {
   margin: 0 50px;
+}
+
+.toolbars {
+  background-color: #ccc;
+  padding: 10px;
+}
+
+.toolbar-inside {
+  width: 200px;
+}
+
+.sub-title {
+  background-color: #aaa;
+  width: 100%;
+  margin-top: -10px;
+  margin-left: -10px;
+  padding: 10px;
+}
+
+.tools {
+  padding: 10px 0;
 }

@@ -5,7 +5,7 @@ const waterColorToName = {
 
 const biomesConfiguration = {
   "DeepOcean": {
-    min: -1,
+    min: -0.7,
     max: -0.4,
     minTemp: 0,
     maxTemp: 0.4,
@@ -14,7 +14,7 @@ const biomesConfiguration = {
     color: '#4682b4',
   },
   "Ocean": {
-    min: -0.2,
+    min: -0.35,
     max: -0.05,
     minTemp: 0.4,
     maxTemp: 1,
@@ -25,8 +25,8 @@ const biomesConfiguration = {
   "Coast": {
     min: 0.01,
     max: 0.01,
-    minTemp: 0,
-    maxTemp: 1,
+    minTemp: 0.2,
+    maxTemp: 0.8,
     minMoisture: 0,
     maxMoisture: 1,
     color: '#fafad2',

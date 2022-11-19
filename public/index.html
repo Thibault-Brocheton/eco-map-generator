@@ -16,7 +16,7 @@
 
   <script defer src="state/state.js"></script>
 
-  <script defer src="eco/biomes.js"></script>
+  <script defer src="eco/2d.js"></script>
   <script defer src="eco/3d.js"></script>
   <script defer src="eco/impexp.js"></script>
 
@@ -91,57 +91,89 @@
             </div>
           </div>
         </div>
-        <div id="toolbar2d">
-          2D TOOLBAR<br/>
-          <button onclick="toolPen()">PEN</button>
-          <button onclick="toolFill()" id="toolFill">FILL</button><br />
-          <input type="number" id="brushWidth" onchange="changeBrushWidth()" value="10" /><br />
-          <div id="color-biomes" style="display: block">
-            <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> DeepOcean<br />
-            <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Ocean<br />
-            <button class="colorPicker" style="background-color: #fafad2" onclick="switchColor('#fafad2')"></button> Coast<br />
-            <button class="colorPicker" style="background-color: #90ee90" onclick="switchColor('#90ee90')"></button> Grasslands<br />
-            <button class="colorPicker" style="background-color: #b8860b" onclick="switchColor('#b8860b')"></button> WarmForest<br />
-            <button class="colorPicker" style="background-color: #f4a460" onclick="switchColor('#f4a460')"></button> Desert<br />
-            <button class="colorPicker" style="background-color: #20b2aa" onclick="switchColor('#20b2aa')"></button> RainForest<br />
-            <button class="colorPicker" style="background-color: #006400" onclick="switchColor('#006400')"></button> Wetland<br />
-            <button class="colorPicker" style="background-color: #228b22" onclick="switchColor('#228b22')"></button> ColdForest<br />
-            <button class="colorPicker" style="background-color: #6b8e23" onclick="switchColor('#6b8e23')"></button> Taiga<br />
-            <button class="colorPicker" style="background-color: #bdb76b" onclick="switchColor('#bdb76b')"></button> Tundra<br />
-            <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Ice<br />
+        <div class="toolbars">
+          <div class="toolbar-inside" id="toolbar-2d">
+            <div class="sub-title">
+              2D TOOLBAR
+            </div>
+            <div class="tools" id="tools">
+              <div data-tools="biomes water">
+                <button onclick="toolPen()">PEN</button> - <input style="width: 50px;" type="number" id="brushWidth" onchange="changeBrushWidth()" value="10" /><br />
+              </div>
+              <div data-tools="water" style="display: none;">
+                <button onclick="toolEraser()">ERASER</button> - <input style="width: 50px;" type="number" id="eraserWidth" onchange="changeEraserWidth()" value="10" /><br />
+              </div>
+              <div  data-tools="biomes water">
+                <button onclick="toolFill()">FILL</button><br />
+              </div>
+              <div  data-tools="temperature rainfall" style="display: none;">
+                <button onclick="generateLayer()">Generate Layer</button><br /> - <input style="width: 50px;" type="number" id="blurPower" onchange="changeBlur()" value="300" /><br />
+              </div>
+            </div>
+            <div id="colors-biomes" style="display: block">
+              <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> DeepOcean<br />
+              <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Ocean<br />
+              <button class="colorPicker" style="background-color: #fafad2" onclick="switchColor('#fafad2')"></button> Coast<br />
+              <button class="colorPicker" style="background-color: #90ee90" onclick="switchColor('#90ee90')"></button> Grasslands<br />
+              <button class="colorPicker" style="background-color: #b8860b" onclick="switchColor('#b8860b')"></button> WarmForest<br />
+              <button class="colorPicker" style="background-color: #f4a460" onclick="switchColor('#f4a460')"></button> Desert<br />
+              <button class="colorPicker" style="background-color: #20b2aa" onclick="switchColor('#20b2aa')"></button> RainForest<br />
+              <button class="colorPicker" style="background-color: #006400" onclick="switchColor('#006400')"></button> Wetland<br />
+              <button class="colorPicker" style="background-color: #228b22" onclick="switchColor('#228b22')"></button> ColdForest<br />
+              <button class="colorPicker" style="background-color: #6b8e23" onclick="switchColor('#6b8e23')"></button> Taiga<br />
+              <button class="colorPicker" style="background-color: #bdb76b" onclick="switchColor('#bdb76b')"></button> Tundra<br />
+              <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Ice<br />
+            </div>
+            <div id="colors-water" style="display: none">
+              <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> River<br />
+              <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Lake<br />
+            </div>
+            <div id="colors-temperature" style="display: none">
+              <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Colder<br />
+              <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Warmer<br />
+            </div>
+            <div id="colors-rainfall" style="display: none">
+              <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Dry<br />
+              <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Wet<br />
+            </div>
+            <div id="colors-height" style="display: none">
+              <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Lower<br />
+              <button class="colorPicker" style="background-color: #808080" onclick="switchColor('#808080')"></button> WaterLevel<br />
+              <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Higher<br />
+            </div>
+            <div id="colors-waterlevel" style="display: none">
+              <button class="colorPicker" style="background-color: #808080" onclick="switchColor('#808080')"></button> WaterLevel<br />
+              <button class="colorPicker" style="background-color: #ffffff" onclick="switchColor('#ffffff')"></button> Higher<br />
+            </div>
           </div>
-          <div id="color-water" style="display: none">
-            <button class="colorPicker" style="background-color: #000000" onclick="switchColor('#000000')"></button> Empty<br />
-            <button class="colorPicker" style="background-color: #4682b4" onclick="switchColor('#4682b4')"></button> River<br />
-            <button class="colorPicker" style="background-color: #87cefa" onclick="switchColor('#87cefa')"></button> Lake<br />
+          <div class="toolbar-inside" id="toolbar-3d" style="display: none">
+            3D TOOLBAR<br/>
+            <button onclick="toolMove()">MOVE</button>
+            <button onclick="toolElevation()">Elevation</button>
+            <button onclick="toolColor()">Color (Debug)</button><br />
+            Width:<input type="number" id="elevationWidth" onchange="changeElevationWidth()" style="display: none;" value="10" /><br />
+            Height:<input type="number" id="elevationHeight" onchange="changeElevationHeight()" style="display: none;" value="10" /><br />
+            <button onclick="togglePlaneWater()">Toggle Water</button><br />
+            <button onclick="generateHeightmapBasic()">Generate HeightMap (basic)</button><br />
+            <br />
+            Seed: <input type="number" id="perlin-seed" value="1"/><br />
+            Spread X: <input type="number" id="perlin-spread-x" value="100"/><br />
+            Spread Y: <input type="number" id="perlin-spread-y" value="100"/><br />
+            Power: <input type="number" id="perlin-power" value="25"/><br />
+            <button onclick="generateHeightmapPerlin()">Generate HeightMap (perlin)</button><br />
+            <br />
+            Loop: <input type="number" id="smooth-loop" value="1" style="width: 30px" /> - Width: <input type="number" id="smooth-width" value="1" style="width: 30px" /> - <button onclick="smoothHeightMap()">Smooth HeightMap</button><br />
+            <!--<button onclick="forceCoastHeight()">Force Coast height</button><br />-->
+
+            <!--<button onclick="refresh3dContent(true, true)">Show With All</button><br />
+            <button onclick="refresh3dContent(false, true)">Show Without Water Color</button><br />
+            <button onclick="refresh3dContent(true, false)">Show Without Water Elevation</button><br />
+            <button onclick="refresh3dContent(false, false)">Show Without Water</button><br />-->
+
+
+            Water Power: <input type="number" id="water-power" value="10" /><br />
+            <button onclick="smoothWater()">Smooth Water</button>
           </div>
-        </div>
-        <div id="toolbar3d" style="display: none">
-          3D TOOLBAR<br/>
-          <button onclick="toolMove()">MOVE</button>
-          <button onclick="toolElevation()">Elevation</button>
-          <button onclick="toolColor()">Color (Debug)</button><br />
-          Width:<input type="number" id="elevationWidth" onchange="changeElevationWidth()" style="display: none;" value="10" /><br />
-          Height:<input type="number" id="elevationHeight" onchange="changeElevationHeight()" style="display: none;" value="10" /><br />
-          <button onclick="togglePlaneWater()">Toggle Water</button><br />
-          <button onclick="generateHeightmapBasic()">Generate HeightMap (basic)</button><br />
-          <br />
-          Seed: <input type="number" id="perlin-seed" value="1"/><br />
-          Spread X: <input type="number" id="perlin-spread-x" value="100"/><br />
-          Spread Y: <input type="number" id="perlin-spread-y" value="100"/><br />
-          Power: <input type="number" id="perlin-power" value="25"/><br />
-          <button onclick="generateHeightmapPerlin()">Generate HeightMap (perlin)</button><br />
-          <br />
-          Loop: <input type="number" id="smooth-loop" value="1" style="width: 30px" /> - Width: <input type="number" id="smooth-width" value="1" style="width: 30px" /> - <button onclick="smoothHeightMap()">Smooth HeightMap</button><br />
-          <button onclick="forceCoastHeight()">Force Coast height</button><br />
-
-          <button onclick="refresh3dContent(true, true)">Show With All</button><br />
-          <button onclick="refresh3dContent(false, true)">Show Without Water Color</button><br />
-          <button onclick="refresh3dContent(true, false)">Show Without Water Elevation</button><br />
-          <button onclick="refresh3dContent(false, false)">Show Without Water</button><br />
-
-
-          Water Power: <input type="number" id="water-power" value="10" /> - <button onclick="printWater()">Print Water</button><br />
         </div>
       </div>
     </div>
