@@ -12,3 +12,7 @@ Install dependencies: `npm install`
 Run server: `node index.js`
 
 Access the generator: http://localhost:3000
+
+## Contribute
+
+Want to add features ? Contact me on Discord: zangdar1111
