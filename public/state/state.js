@@ -8,7 +8,7 @@ const initialState = {
   tool3d: 'move',
   brushWidth: 10,
   eraserWidth: 10,
-  blurPower: 300,
+  blurPower: 200,
   color: '#000000',
   isPointerDown: false,
   scene: null,
@@ -286,6 +286,7 @@ function switchView() {
     toolbar3dDiv.style.display = 'block';
     container3d.style.display = 'block';
     window.state.activeDimension = '3d';
+
     refresh3dContent();
   }
 }

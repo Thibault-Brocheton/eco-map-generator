@@ -93,13 +93,12 @@ function addBlack(ctx, size) {
 
 function handleHeightSet(matrix, height) {
   if (height > maxHeight) {
-    matrix.elements[5] = maxHeight;
-    matrix.elements[13] = maxHeight / 2;
+    matrix.elements[5] = Math.floor(maxHeight);
   } else if (height < 1) {
     matrix.elements[5] = 1;
-    matrix.elements[13] = 0.5;
   } else {
-    matrix.elements[5] = height;
-    matrix.elements[13] = matrix.elements[5] / 2;
+    matrix.elements[5] = Math.floor(height);
   }
+
+  matrix.elements[13] = matrix.elements[5] / 2;
 }

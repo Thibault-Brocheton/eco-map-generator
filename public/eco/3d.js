@@ -1,5 +1,6 @@
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+const lockedColor = "#333333";
 
 function init3dView() {
   const scene = new THREE.Scene();
@@ -132,22 +133,69 @@ function drawWith3dTool(res, e) {
 
         intersects[0].object.instanceMatrix.needsUpdate = true;
       }
-    } else if (window.state.tool3d === 'color') {
+    } else if (window.state.tool3d === 'debug') {
       raycaster.setFromCamera(pointer, window.state.camera);
 
       const intersects = raycaster.intersectObjects(window.state.scene.children).filter(a => a.faceIndex === 5 || a.faceIndex === 4);
-      const threeColor = new THREE.Color();
-
-      for (let i = 0; i < intersects.length; i++) {
-        if (i === 0) {
-          console.log(intersects[i]);
-        }
-
-        intersects[i].object.setColorAt(intersects[i].instanceId, threeColor.setHex(0xff0000));
-      }
 
       if (intersects.length) {
-        intersects[0].object.instanceColor.needsUpdate = true;
+        console.log(intersects[0]);
+
+        const matrix = new THREE.Matrix4();
+        intersects[0].object.getMatrixAt(intersects[0].instanceId, matrix);
+
+        console.log(matrix);
+
+        alert(`Height is: ${matrix.elements[5]}`);
+      }
+    } else if (window.state.tool3d === 'lockBiome') {
+      const biomesData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
+      const threeColor = new THREE.Color();
+
+      raycaster.setFromCamera(pointer, window.state.camera);
+
+      const intersects = raycaster.intersectObjects(window.state.scene.children).filter(a => a.faceIndex === 5 || a.faceIndex === 4);
+
+      if (intersects.length) {
+        const matrix = new THREE.Matrix4();
+        intersects[0].object.getMatrixAt(intersects[0].instanceId, matrix);
+
+        const selectedBiome = biomeColorToName[rgbToHex(biomesData.data[intersects[0].instanceId * 4], biomesData.data[intersects[0].instanceId * 4 + 1], biomesData.data[intersects[0].instanceId * 4 + 2])];
+
+        const remaining = [intersects[0].instanceId];
+        const visited = new Set([intersects[0].instanceId]);
+
+        while (remaining.length > 0) {
+          const testId = remaining.shift();
+          const testBiome = biomeColorToName[rgbToHex(biomesData.data[testId * 4], biomesData.data[testId * 4 + 1], biomesData.data[testId * 4 + 2])];
+
+          if (testBiome === selectedBiome) {
+            if (!lockedHeights.has(testId)) {
+              lockedHeights.add(testId);
+
+              let randomTaint = Math.random() - 0.5;
+              if (randomTaint < -0.2 || randomTaint > 0.2) randomTaint = 0;
+              const color = pSBc(randomTaint / 2, lockedColor);
+              const colorHex = Number('0x' + color.substring(1, color.length));
+
+              window.state.instanceMesh.setColorAt(testId, threeColor.setHex(colorHex));
+            }
+
+            const neighbors = [
+              testId % window.state.size === 0 ? testId + window.state.size - 1  : testId - 1,
+              testId % window.state.size === window.state.size - 1 ? testId - window.state.size + 1 : testId + 1,
+              testId < window.state.size ? window.state.size * (window.state.size - 1) + testId : testId - window.state.size,
+              testId > window.state.size * (window.state.size - 1) ? testId % window.state.size : testId + window.state.size,
+            ];
+
+            neighbors.filter(n => !visited.has(n)).forEach(n => {
+              remaining.push(n);
+              visited.add(n);
+            });
+          }
+        }
+
+        window.state.instanceMesh.instanceColor.needsUpdate = true;
       }
     }
   }
@@ -162,15 +210,17 @@ function generateHeightmapBasic() {
   const matrix = new THREE.Matrix4();
 
   for (let i = 0; i < window.state.size * window.state.size; i++) {
+    if (lockedHeights.has(i)) continue;
+
     window.state.instanceMesh.getMatrixAt(i, matrix);
 
     const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
 
     if (!biomeColorToName[color]) continue;
 
-    const biomeHeight = biomesConfiguration[biomeColorToName[color]];
+    const biomeConfig = biomesConfiguration[biomeColorToName[color]];
 
-    const coeff = ((biomeHeight.min + biomeHeight.max) / 2);
+    const coeff = biomeConfig.min > 0 ? biomeConfig.min : biomeConfig.max < 0 ? biomeConfig.max : 0;
 
     if (coeff > 0) {
       handleHeightSet(matrix, (coeff * (maxHeight - waterHeight) + waterHeight));
@@ -185,7 +235,7 @@ function generateHeightmapBasic() {
 }
 
 function generateHeightmapPerlin() {
-  const seed = parseInt(document.getElementById("perlin-seed").value);
+  const seed = parseInt(document.getElementById("perlin-seed").value) || Math.random();
   const spreadX = parseInt(document.getElementById("perlin-spread-x").value);
   const spready = parseInt(document.getElementById("perlin-spread-y").value);
   const power = parseInt(document.getElementById("perlin-power").value);
@@ -198,6 +248,8 @@ function generateHeightmapPerlin() {
   for (let i = 0; i < window.state.size; i++) {
     for (let j = 0; j < window.state.size; j++) {
       const id = j + i * window.state.size;
+
+      if (lockedHeights.has(id)) continue;
 
       const p = noise.perlin2(i / spreadX, j / spready);
 
@@ -227,7 +279,7 @@ function generateHeightmapPerlin() {
   window.state.instanceMesh.instanceMatrix.needsUpdate = true;
 }
 
-function togglePrintWater() {
+/*function togglePrintWater() {
   if (window.state.printWaterChanges) {
 
   } else {
@@ -248,9 +300,9 @@ function togglePrintWater() {
 
     window.state.instanceMesh.instanceMatrix.needsUpdate = true;
   }
-}
+}*/
 
-function simpleMinimumDistanceToLand(myImageData, i) {
+/*function simpleMinimumDistanceToLand(myImageData, i) {
   const pathes = [
     [-1, -1],
     [0, -1],
@@ -279,7 +331,7 @@ function simpleMinimumDistanceToLand(myImageData, i) {
   }
 
   return distances.reduce((acc, cur) => acc < cur ? acc : cur, window.state.size);
-}
+}*/
 
 function getAllWaterDepth(myImageData) {
   const waterDepth = [];
@@ -291,7 +343,7 @@ function getAllWaterDepth(myImageData) {
     } else {
       waterDepth.push(window.state.size);
 
-      if (getNeighboursAtDistance(i, 1).map(n => myImageData.data[n * 4 + 3]).some(n => n === 0)) {
+      if (getNeighboursAtDistance(i, 1, true, true).map(n => myImageData.data[n * 4 + 3]).some(n => n === 0)) {
         waterNeighbours.add(i);
       }
     }
@@ -303,7 +355,7 @@ function getAllWaterDepth(myImageData) {
   while (!iteratorValue.done) {
     const currentId = iteratorValue.value;
 
-    const neighbours = getNeighboursAtDistance(currentId, 1, false);
+    const neighbours = getNeighboursAtDistance(currentId, 1, false, true);
 
     waterDepth[currentId] = Math.min(...(neighbours.map(n => waterDepth[n]))) + 1;
 
@@ -342,7 +394,7 @@ function getRealMinMax(height) {
   }
 }
 
-function getNeighboursAtDistance(id, width, includeCenter = true) {
+function getNeighboursAtDistance(id, width, includeCenter = true, includeDiagonals = true) {
   const neighbours = [];
 
   for (let x = -width; x <= width; x++) {
@@ -350,6 +402,10 @@ function getNeighboursAtDistance(id, width, includeCenter = true) {
       let localId = id + x + y;
 
       if (!includeCenter && x === 0 && y === 0) {
+        continue;
+      }
+
+      if (!includeDiagonals && x !== 0 && y !== 0) {
         continue;
       }
 
@@ -423,6 +479,8 @@ function smoothHeightMap() {
     for (let i = 0; i < window.state.size * window.state.size; i++) {
       window.state.instanceMesh.getMatrixAt(i, matrix);
 
+      if (lockedHeights.has(i)) continue;
+
       const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
       if (!biomeColorToName[color]) continue;
 
@@ -430,9 +488,10 @@ function smoothHeightMap() {
 
       let newElevation = newHeight[i];
 
+      /* Allow to go under the min so we avoid rocks near border of oceans
       if (newElevation < biomeHeight.min) {
         newElevation = biomeHeight.min;
-      }
+      }*/
 
       if (newElevation > biomeHeight.max) {
         newElevation = biomeHeight.max;
@@ -527,8 +586,8 @@ function toolElevation() {
   console.log('3d tool is now', window.state.tool3d)
 }
 
-function toolColor() {
-  window.state.tool3d = 'color';
+function toolLockBiome() {
+  window.state.tool3d = 'lockBiome';
   document.getElementById('elevationWidth').style.display = 'none';
   document.getElementById('elevationHeight').style.display = 'none';
   window.state.controls.enabled = false;
@@ -536,23 +595,68 @@ function toolColor() {
   console.log('3d tool is now', window.state.tool3d)
 }
 
-function forceCoastHeight() {
-  const myImageData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
+function toolDebug() {
+  window.state.tool3d = 'debug';
+  document.getElementById('elevationWidth').style.display = 'none';
+  document.getElementById('elevationHeight').style.display = 'none';
+  window.state.controls.enabled = false;
+
+  console.log('3d tool is now', window.state.tool3d)
+}
+
+const lockedHeights = new Set();
+
+function lockHeight() {
+  const height = document.getElementById('lockHeight').value;
+  console.log(height);
+
   const matrix = new THREE.Matrix4();
+  const threeColor = new THREE.Color();
 
   for (let i = 0; i < window.state.size * window.state.size; i++) {
     window.state.instanceMesh.getMatrixAt(i, matrix);
 
-    const color = rgbToHex(myImageData.data[i * 4], myImageData.data[i * 4 + 1], myImageData.data[i * 4 + 2]);
+    if (matrix.elements[5] > height && !lockedHeights.has(i)) {
+      lockedHeights.add(i);
 
-    if (biomeColorToName[color] !== 'Coast') continue;
+      let randomTaint = Math.random() - 0.5;
+      if (randomTaint < -0.2 || randomTaint > 0.2) randomTaint = 0;
+      const color = pSBc(randomTaint / 2, lockedColor);
+      const colorHex = Number('0x' + color.substring(1, color.length));
 
-    handleHeightSet(matrix, waterHeight);
-
-    window.state.instanceMesh.setMatrixAt(i, matrix);
+      window.state.instanceMesh.setColorAt(i, threeColor.setHex(colorHex));
+    }
   }
 
-  window.state.instanceMesh.instanceMatrix.needsUpdate = true;
+  window.state.instanceMesh.instanceColor.needsUpdate = true;
+}
+
+function unlock() {
+  const matrix = new THREE.Matrix4();
+  const threeColor = new THREE.Color();
+  const biomesData = biomeContext.getImageData(0, 0, window.state.size, window.state.size);
+  const waterData = waterContext.getImageData(0, 0, window.state.size, window.state.size);
+
+  for (const i of lockedHeights.keys()) {
+    window.state.instanceMesh.getMatrixAt(i, matrix);
+
+    let color = rgbToHex(biomesData.data[i * 4], biomesData.data[i * 4 + 1], biomesData.data[i * 4 + 2]);
+    const waterColor = rgbToHex(waterData.data[i * 4], waterData.data[i * 4 + 1], waterData.data[i * 4 + 2]);
+
+    if (waterColor !== '#000000') {
+      color = waterColor;
+    }
+
+    let randomTaint = Math.random() - 0.5;
+    if (randomTaint < -0.2 || randomTaint > 0.2) randomTaint = 0;
+    color = pSBc(randomTaint / 2, color);
+    const colorHex = Number('0x' + color.substring(1, color.length));
+
+    window.state.instanceMesh.setColorAt(i, threeColor.setHex(colorHex));
+  }
+
+  window.state.instanceMesh.instanceColor.needsUpdate = true;
+  lockedHeights.clear();
 }
 
 function togglePlaneWater() {
@@ -569,7 +673,7 @@ function togglePlaneWater() {
     });
     const planeWater = new THREE.Mesh(geoWater, matWater);
     planeWater.position.x = window.state.size / 2;
-    planeWater.position.y = waterHeight;
+    planeWater.position.y = waterHeight - 0.2;
     planeWater.position.z = window.state.size / 2;
     planeWater.rotateX(-Math.PI / 2);
 
@@ -589,9 +693,16 @@ function apply3dElevationToCanvas() {
   const depthArray = getAllWaterDepth(waterData);
 
   const matrix = new THREE.Matrix4();
+  const threeColor = new THREE.Color();
 
   for (let i = 0; i < window.state.size * window.state.size; i++) {
     window.state.instanceMesh.getMatrixAt(i, matrix);
+
+    // debug
+    /*if (depthArray[i] > 0) {
+      window.state.instanceMesh.setColorAt(i, threeColor.setHex(Number(`0x${(depthArray[i] * 20).toString(16)}0000`)));
+    }*/
+    //
 
     const greyValue = elevationToGrey(heightToElevation(matrix.elements[5]));
 
@@ -601,7 +712,7 @@ function apply3dElevationToCanvas() {
       waterlevelData.data[i * 4 + 2] = greyValue;
       waterlevelData.data[i * 4 + 3] = 255;
 
-      const greyHeightValue = elevationToGrey(heightToElevation(matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower))));
+      const greyHeightValue = elevationToGrey(heightToElevation(matrix.elements[5] - (Math.ceil(depthArray[i] * waterPower)))) - 2;
 
       heightData.data[i * 4]     = greyHeightValue;
       heightData.data[i * 4 + 1] = greyHeightValue;
@@ -623,6 +734,8 @@ function apply3dElevationToCanvas() {
 
   waterlevelContext.putImageData(waterlevelData, 0, 0);
   heightContext.putImageData(heightData, 0, 0);
+
+  window.state.instanceMesh.instanceColor.needsUpdate = true;
 }
 
 function smoothWater() {

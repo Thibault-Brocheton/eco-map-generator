@@ -189,9 +189,13 @@ function generateLayer() {
     const biomesConfig = biomesConfiguration[biomeColorToName[color]];
     const biomesRange = window.state.activeLayer === 'temperature' ? { min: biomesConfig.minTemp, max: biomesConfig.maxTemp } : { min: biomesConfig.minMoisture, max: biomesConfig.maxMoisture };
 
-    const random = Math.abs(noise.simplex2((i % window.state.size) / window.state.blurPower, Math.floor(i / window.state.size) / window.state.blurPower));
+    //const random = Math.abs(noise.simplex2((i % window.state.size) / window.state.blurPower, Math.floor(i / window.state.size) / window.state.blurPower));
+    const random = (noise.simplex2((i % window.state.size) / window.state.blurPower, Math.floor(i / window.state.size) / window.state.blurPower) + 1) / 2;
 
     const coeff = biomesRange.min + (random * (biomesRange.max - biomesRange.min));
+    //const coeff = random;
+
+
 
     activeData.data[i * 4] = coeff * 255;
     activeData.data[i * 4 + 1] = coeff * 255;

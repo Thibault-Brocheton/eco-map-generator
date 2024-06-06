@@ -36,7 +36,8 @@
       </div>
       <div class="load-map">
         MAP Load<br />
-        <button><label for="inputMap">Import Existing Map</label></button><input multiple style="display: none;" type="file" id="inputMap" accept = "image/png">
+        <button><label for="inputMap">Import Existing Map</label></button><input multiple style="display: none;" type="file" id="inputMap" accept = "image/png"><br />
+        <input type="checkbox" id="rebaseHeightmap"/><label for="rebaseHeightmap">Rebase heightmap</label>
       </div>
     </div>
     <div class="close-map" id="close-map" style="display: none;">
@@ -107,7 +108,7 @@
                 <button onclick="toolFill()">FILL</button><br />
               </div>
               <div  data-tools="temperature rainfall" style="display: none;">
-                <button onclick="generateLayer()">Generate Layer</button><br /> - <input style="width: 50px;" type="number" id="blurPower" onchange="changeBlur()" value="300" /><br />
+                <button onclick="generateLayer()">Generate Layer</button><br /> - <input style="width: 50px;" type="number" id="blurPower" onchange="changeBlur()" value="200" /><br />
               </div>
             </div>
             <div id="colors-biomes" style="display: block">
@@ -150,13 +151,18 @@
             3D TOOLBAR<br/>
             <button onclick="toolMove()">MOVE</button>
             <button onclick="toolElevation()">Elevation</button>
-            <button onclick="toolColor()">Color (Debug)</button><br />
+            <button onclick="toolLockBiome()">Lock Biome</button>
+            <button onclick="toolDebug()">Debug</button><br />
             Width:<input type="number" id="elevationWidth" onchange="changeElevationWidth()" style="display: none;" value="10" /><br />
             Height:<input type="number" id="elevationHeight" onchange="changeElevationHeight()" style="display: none;" value="10" /><br />
             <button onclick="togglePlaneWater()">Toggle Water</button><br />
+            <button onclick="apply3dElevationToCanvas()">debug Apply elevation to canvas</button><br />
+            <br />
+            <button onclick="lockHeight()">LockHeight</button><input id="lockHeight" type="number" value="60" /><br />
+            <button onclick="unlock()">Unlock All</button><br /><br />
             <button onclick="generateHeightmapBasic()">Generate HeightMap (basic)</button><br />
             <br />
-            Seed: <input type="number" id="perlin-seed" value="1"/><br />
+            Seed: <input type="number" id="perlin-seed" value=""/><br />
             Spread X: <input type="number" id="perlin-spread-x" value="100"/><br />
             Spread Y: <input type="number" id="perlin-spread-y" value="100"/><br />
             Power: <input type="number" id="perlin-power" value="25"/><br />

@@ -1,4 +1,4 @@
-function importExistingMap(eventChange) {
+function importExistingMap(eventChange, rebaseHeightMap) {
   const files = eventChange.target.files;
 
   if (!files || !files.length) {
@@ -21,14 +21,16 @@ function importExistingMap(eventChange) {
         images.push(myImage);
 
         if (images.length === files.length) {
-          loadMap(images);
+          loadMap(images, rebaseHeightMap);
         }
       }
     }
   }
 }
 
-function loadMap(images) {
+function loadMap(images, rebaseHeightMap) {
+  console.log("rebaseHeightMap", rebaseHeightMap);
+
   const biomes = images.find(i => i.id.toLowerCase().startsWith('biomes'));
 
   if (!biomes) {
@@ -70,6 +72,20 @@ function loadMap(images) {
 
   if (heightImage) {
     heightContext.drawImage(heightImage, 0, 0);
+  }
+
+  if (rebaseHeightMap) {
+    const myImageData = heightContext.getImageData(0, 0, window.state.size, window.state.size);
+
+    for (let i = 0; i < myImageData.data.length / 4; i++) {
+      const newValue = Math.floor(myImageData.data[i * 4] / 2 + 128, 255);
+
+      myImageData.data[i * 4] = newValue;
+      myImageData.data[i * 4 + 1] = newValue;
+      myImageData.data[i * 4 + 2] = newValue;
+    }
+
+    heightContext.putImageData(myImageData, 0, 0);
   }
 
   const waterLevel = images.find(i => i.id.toLowerCase().includes('waterlevel'));

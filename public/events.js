@@ -55,7 +55,11 @@ function initEvents() {
   window.addEventListener('pointermove', onPointerMove);
 
   let inputMap = document.getElementById('inputMap');
-  inputMap.addEventListener('change', importExistingMap);
+  inputMap.addEventListener('change', (event) => {
+    const rebaseHeightMap = document.getElementById('rebaseHeightmap').checked;
+
+    importExistingMap(event, rebaseHeightMap);
+  });
 }
 
 function mouseEvent(...args) {

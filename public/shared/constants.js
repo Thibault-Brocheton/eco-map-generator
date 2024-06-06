@@ -6,7 +6,7 @@ const waterColorToName = {
 const biomesConfiguration = {
   "DeepOcean": {
     min: -0.7,
-    max: -0.4,
+    max: -0.2,
     minTemp: 0,
     maxTemp: 0.4,
     minMoisture: 0,
@@ -14,7 +14,7 @@ const biomesConfiguration = {
     color: '#4682b4',
   },
   "Ocean": {
-    min: -0.35,
+    min: -0.15,
     max: -0.05,
     minTemp: 0.4,
     maxTemp: 1,
@@ -23,17 +23,17 @@ const biomesConfiguration = {
     color: '#87cefa',
   },
   "Coast": {
-    min: 0.01,
-    max: 0.01,
-    minTemp: 0.2,
-    maxTemp: 0.8,
+    min: -0.05,
+    max: 0.03,
+    minTemp: 0,
+    maxTemp: 1,
     minMoisture: 0,
     maxMoisture: 1,
     color: '#fafad2',
   },
   "Grasslands": {
-    min: 0.02,
-    max: 0.4,
+    min: 0.03,
+    max: 1,
     minTemp: 0.4,
     maxTemp: 0.8,
     minMoisture: 0.3,
@@ -41,8 +41,8 @@ const biomesConfiguration = {
     color: '#90ee90',
   },
   "WarmForest": {
-    min: 0.1,
-    max: 0.5,
+    min: 0.03,
+    max: 1,
     minTemp: 0.5,
     maxTemp: 0.8,
     minMoisture: 0.5,
@@ -50,8 +50,8 @@ const biomesConfiguration = {
     color: '#b8860b',
   },
   "Desert": {
-    min: 0.02,
-    max: 0.2,
+    min: 0.03,
+    max: 1,
     minTemp: 0.7,
     maxTemp: 1,
     minMoisture: 0,
@@ -59,8 +59,8 @@ const biomesConfiguration = {
     color: '#f4a460',
   },
   "RainForest": {
-    min: 0.1,
-    max: 0.5,
+    min: 0.03,
+    max: 1,
     minTemp: 0.6,
     maxTemp: 0.8,
     minMoisture: 0.7,
@@ -68,8 +68,8 @@ const biomesConfiguration = {
     color: '#20b2aa',
   },
   "Wetland": {
-    min: 0.02,
-    max: 0.3,
+    min: 0.03,
+    max: 1,
     minTemp: 0.4,
     maxTemp: 0.6,
     minMoisture: 0.6,
@@ -77,8 +77,8 @@ const biomesConfiguration = {
     color: '#006400',
   },
   "ColdForest": {
-    min: 0.1,
-    max: 0.7,
+    min: 0.03,
+    max: 1,
     minTemp: 0.2,
     maxTemp: 0.5,
     minMoisture: 0.5,
@@ -86,7 +86,7 @@ const biomesConfiguration = {
     color: '#228b22',
   },
   "Taiga": {
-    min: 0.3,
+    min: 0.03,
     max: 1,
     minTemp: 0.2,
     maxTemp: 0.3,
@@ -95,7 +95,7 @@ const biomesConfiguration = {
     color: '#6b8e23',
   },
   "Tundra": {
-    min: 0.4,
+    min: 0.03,
     max: 1,
     minTemp: 0.1,
     maxTemp: 0.2,
@@ -104,7 +104,7 @@ const biomesConfiguration = {
     color: '#bdb76b',
   },
   "Ice": {
-    min: 0.6,
+    min: 0.03,
     max: 1,
     minTemp: 0,
     maxTemp: 0.1,
